@@ -3,7 +3,7 @@ import requests
 from crawl4ai import *
 
 async def main():
-    url = input("Enter the Github repo URL to scrape:")
+    url = input("Enter the Github repo URL to scrape:").rstrip('/').split('/tree')[0]
     blocks = url.strip('/').split('/')
     owner, repo = blocks[-2], blocks[-1]
 
@@ -26,7 +26,7 @@ async def main():
         if file['type'] == 'file':
             name = file['name']
             # Include README, docs, code files, and config files
-            if name.endswith(('.md', '.py', '.js', '.ts', '.json', '.yaml', '. yml', '.txt')):
+            if name.endswith(('.md', '.py', '.js', '.ts', '.json', '.yaml', '.yml', '.txt')):
                 important_files.append(file['download_url'])
 
     print(f"Found {len(important_files)} important files")
