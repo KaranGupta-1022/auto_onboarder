@@ -2,7 +2,7 @@ import chromeadb
 from setence_transformers import SentenceTransformer
 import os 
 
-def embed_and_store():
+def main():
     # Initialize the embedding model
     if not os.path.exists("repo_content.md"):
         print("repo_content.md doesn't exist. Please runt the scraper first.")
@@ -42,4 +42,4 @@ def embed_and_store():
             print(f"Stored {i}/{len(chunks)} chunks")
         
 if __name__ == "__main__":
-    embed_and_store()
+    main()
