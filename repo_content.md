@@ -141,6 +141,1966 @@ To complete the implementation:
 
 
 
+## File: page.jsx
+```
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { GoogleIcon, GitHubIcon, LogoIcon } from '../../Icons';
+
+export default function Page() {
+  const router = useRouter();
+  const supabase = createClientComponentClient();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.push('/dashboard'); // redirect if already signed in
+      }
+    };
+    checkSession();
+  }, [router, supabase]);
+
+  const handleOAuthLogin = async (provider) => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${location.origin}/auth/callback`, // must be set in Supabase dashboard
+        scopes: "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/gmail.readonly",
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+          include_granted_scopes: 'true',
+        },
+      },
+    });
+    if (error) console.error('OAuth error:', error.message);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white px-4 grid-bg">
+      <div className="absolute inset-0 z-[-1] animate-spin-slow bg-gradient-radial from-violet-600/10 via-indigo-500/10 to-transparent" />
+      <div className="w-full max-w-md bg-black/30 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-violet-900/20 p-8">
+        <div className="text-center mb-8">
+          <a href="#" className="inline-flex items-center space-x-3">
+            <LogoIcon />
+            <span className="text-3xl font-bold text-white">Meritly</span>
+          </a>
+        </div>
+
+        <h2 className="text-center text-2xl font-bold mb-2">Welcome back</h2>
+        <p className="text-center text-sm text-gray-400 mb-8">Sign in to continue to Meritly</p>
+
+        <div className="space-y-4">
+          <button
+            onClick={() => handleOAuthLogin('google')}
+            className="w-full flex items-center justify-center space-x-3 py-3 px-4 bg-white/5 border border-white/20 rounded-lg text-white font-medium hover:bg-white/10 transition"
+          >
+            <GoogleIcon />
+            <span>Continue with Google</span>
+          </button>
+          <button
+            onClick={() => handleOAuthLogin('github')}
+            className="w-full flex items-center justify-center space-x-3 py-3 px-4 bg-white/5 border border-white/20 rounded-lg text-white font-medium hover:bg-white/10 transition"
+          >
+            <GitHubIcon />
+            <span>Continue with GitHub</span>
+          </button>
+        </div>
+
+        <div className="flex items-center my-8">
+          <hr className="flex-grow border-t border-white/10" />
+          <span className="mx-4 text-xs text-gray-400">OR</span>
+          <hr className="flex-grow border-t border-white/10" />
+        </div>
+
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            const email = e.target.email.value;
+            const password = e.target.password.value;
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+              alert(error.message);
+            } else {
+              router.push('/dashboard');
+            }
+          }}
+          className="space-y-6"
+        >
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+              Email address
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-violet-400 focus:outline-none transition"
+              placeholder="you@example.com"
+            />
+          </div>
+
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+                Password
+              </label>
+              <a href="#" className="text-xs font-medium text-violet-400 hover:text-violet-300">
+                Forgot password?
+              </a>
+            </div>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-violet-400 focus:outline-none transition"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              className="w-full px-6 py-3 rounded-full bg-violet-600 text-white font-semibold hover:bg-violet-700 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-950 focus:ring-violet-500"
+            >
+              Sign In
+            </button>
+          </div>
+        </form>
+
+        <p className="text-center text-sm text-gray-400 mt-8">
+          Don't have an account?{' '}
+          <a href="/signup" className="font-medium text-violet-400 hover:text-violet-300">
+            Sign Up
+          </a>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+```
+
+
+
+
+## File: Icons.jsx
+```
+export const LogoIcon = () => (
+    <svg className="h-8 w-8 text-violet-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+  
+  export const GoogleIcon = () => (
+    <svg className="h-5 w-5" viewBox="0 0 48 48">
+      <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+      <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+      <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+      <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C39.99,34.556,44,29.865,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+    </svg>
+  );
+  
+  export const GitHubIcon = () => (
+    <svg className="h-5 w-5" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
+        0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13
+        -.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66
+        .07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15
+        -.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27
+        .68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12
+        .51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48
+        0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
+    </svg>
+  );
+  
+```
+
+
+
+
+## File: timelineActions.js
+```
+'use server';
+
+import { createClient } from '../supabase/server';
+import { revalidatePath } from 'next/cache';
+
+export async function createNewTimeline() {
+    const supabase = await createClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+        console.error("Authentication error:", userError);
+        return { error: "Authentication failed. Please log in." };
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from("Workflow")
+            .insert([
+                {
+                    user_id: user.id,
+                    created_at: new Date().toISOString(),
+                    name: "hello"
+                }
+            ])
+            .select(); // Select the newly created row to get its ID
+
+        if (error) {
+            console.error("Supabase insert error:", error);
+            return { error: error.message };
+        }
+
+        // Revalidate the dashboard page to show the new timeline immediately
+        revalidatePath('/dashboard');
+
+        return { data: data[0] }; // Return the created row data
+    } catch (err) {
+        console.error("Unexpected error:", err);
+        return { error: "An unexpected error occurred." };
+    }
+}
+
+export async function getProjects() {
+    const supabase = await createClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+        console.error("Authentication error:", userError);
+        return { error: "Authentication failed. Please log in." };
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from("Workflow")
+            .select('id, name, status')
+            .eq('user_id', user.id)
+        if(error){
+            console.error("Supabase select error:", error);
+            return { error: error.message };
+        }
+        else{
+            return data;
+        }
+    } catch (err) {
+        console.error("Unexpected error:", err);
+        return { error: "An unexpected error occurred." };
+    }
+}
+
+export async function getBlocks(workflow_id){
+    console.log("workflow_id", workflow_id);
+    const supabase = await createClient();
+    console.log("fetching blocks....");
+    const {data, error} = await supabase
+        .from("blocks")
+        .select("*")
+        .eq("workflow_id", workflow_id);
+    if(error){
+        console.error("supabase fetching error: ", error);
+    }
+    console.log("data: ", data);
+    return data.map(block => ({
+        id: block.id,
+        type: block.type,
+        prompt: block.prompt,
+        offset: block.Offset ?? 0,
+        created_at: block.created_at,
+      }));
+}
+
+export async function saveTimeline(sortedSteps, workflow_id){
+    const supabase = await createClient();
+    const currentIDs = sortedSteps.map(step => step.id);
+    console.log("currentIDs: ", currentIDs);
+    const { error: deleteError } = await supabase
+        .from("blocks")
+        .delete()
+        .eq("workflow_id", workflow_id)
+        .not("id", "in", `(${currentIDs.join(",")})`);
+  if (deleteError) {
+    console.error("Error deleting removed blocks:", deleteError);
+  }
+    console.log("inserting blocks.........")
+    console.log("sortedSteps: ", sortedSteps);
+    sortedSteps.map(async (step) =>{
+        const {data, error} = await supabase
+        .from("blocks")
+        .upsert([
+            {
+                id: step.id,
+                workflow_id: workflow_id,
+                Offset: step.position,
+                type: step.type,
+                prompt: step.prompt
+            }
+        ])
+        if(error){
+            console.error("Supabase insert error: ", error);
+            return {error: error.message};
+        }
+    });
+    
+}
+```
+
+
+
+
+## File: route.js
+```
+import { NextResponse } from 'next/server';
+import { createClient } from '../../../../supabase/server';
+
+export async function POST(request, { params }) {
+  try {
+    const { workflow_id } = params;
+    const body = await request.json();
+    
+    const supabase = await createClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
+    }
+
+    const { blocks } = body;
+
+    if (!Array.isArray(blocks)) {
+      return NextResponse.json({ error: 'Blocks must be an array' }, { status: 400 });
+    }
+
+    // First, delete existing blocks for this workflow
+    const { error: deleteError } = await supabase
+      .from('blocks')
+      .delete()
+      .eq('workflow_id', workflow_id);
+
+    if (deleteError) {
+      console.error('Error deleting existing blocks:', deleteError);
+      return NextResponse.json({ error: 'Failed to clear existing blocks' }, { status: 500 });
+    }
+
+    // Insert new blocks
+    const blocksToInsert = blocks.map(block => ({
+      workflow_id: workflow_id,
+      type: block.type,
+      prompt: block.prompt || '',
+      offset: block.offset || 0,
+      user_id: user.id,
+      created_at: new Date().toISOString()
+    }));
+
+    const { data, error } = await supabase
+      .from('blocks')
+      .insert(blocksToInsert)
+      .select();
+
+    if (error) {
+      console.error('Supabase insert error:', error);
+      return NextResponse.json({ error: 'Failed to save blocks' }, { status: 500 });
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      blocks: data 
+    });
+
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function GET(request, { params }) {
+  try {
+    const { workflow_id } = params;
+    
+    const supabase = await createClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
+    }
+
+    const { data, error } = await supabase
+      .from('blocks')
+      .select('*')
+      .eq('workflow_id', workflow_id)
+      .order('offset', { ascending: true });
+
+    if (error) {
+      console.error('Supabase fetch error:', error);
+      return NextResponse.json({ error: 'Failed to fetch blocks' }, { status: 500 });
+    }
+
+    return NextResponse.json({ blocks: data });
+
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+
+```
+
+
+
+
+## File: route.js
+```
+// app/auth/callback/route.js
+import { NextResponse } from "next/server";
+import { createClient } from "../../supabase/server";
+import { encrypt } from "../../../utils/crypto";
+export async function GET(request) {
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get("code");
+  const next = searchParams.get("next") ?? "/dashboard";
+
+  if (code) {
+    const supabase = await createClient();
+    console.log("supabase client: ", supabase);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (error) {
+      console.error(error);
+      return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+    }
+
+    // Access and store the tokens from the session data
+    const providerToken = data.session?.provider_token;
+    const providerRefreshToken = data.session?.provider_refresh_token;
+    const userId = data.session?.user.id;
+    const email = data.session?.user.email;
+    const name = data.session?.user.user_metadata.full_name;
+    const encryptedToken = Buffer.from(encrypt(providerRefreshToken).encrypted).toString("base64");
+    console.log("encrypted token: ", encryptedToken);
+    const { data: upserted, error: upsertError } = await supabase
+      .from('user_tokens')
+      .upsert(
+        { user_id: userId, token: encryptedToken }, 
+        { onConflict: 'user_id'} // tells Postgres which column to check
+     );
+    if (upsertError) {
+      console.error("Upsert failed:", upsertError);
+    } else {
+      console.log("Upsert success:", upserted);
+    }
+
+    const {data: data2, error: error2} = await supabase
+      .from('users')
+      .upsert(
+        { id: userId, email: email, name: name },
+        { onConflit: 'id'}
+      )
+    if(error2){
+      console.error("Upsert user failed:", error2);
+    }
+    // TODO: Use your SQL client (e.g., from your Python backend) to
+    // securely store the userId and providerRefreshToken in your database.
+    // Ensure you handle the case where these tokens might not exist.
+    
+    // Example: A simple database call
+    // await yourDatabaseClient.from('users').update({
+    //   google_refresh_token: providerRefreshToken
+    // }).eq('id', userId);
+
+    const forwardedHost = request.headers.get("x-forwarded-host");
+    const isLocalEnv = process.env.NODE_ENV === "development";
+
+    if (isLocalEnv) {
+      return NextResponse.redirect(`${origin}${next}`);
+    } else if (forwardedHost) {
+      return NextResponse.redirect(`https://${forwardedHost}${next}`);
+    } else {
+      return NextResponse.redirect(`${origin}${next}`);
+    }
+  }
+
+  // Return the user to an error page with instructions
+  return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+}
+```
+
+
+
+
+## File: page.jsx
+```
+'use client';
+import React, { useState, useEffect} from 'react';
+import { supabase, getUserID} from '../supabase/client';
+import { createNewTimeline, getProjects } from '../actions/timelineActions';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Input } from '../../components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
+import { Badge } from '../../components/ui/badge';
+import { useRouter } from 'next/navigation';
+import { 
+  Home, 
+  User, 
+  FolderKanban, 
+  Settings, 
+  Plus, 
+  Video, 
+  Edit, 
+  ChevronDown, 
+  Search, 
+  Trash2,
+  Mail,
+  Calendar,
+  CheckCircle,
+  XCircle,
+  Clock,
+  MoreVertical,
+  LogOut
+} from 'lucide-react';
+import Link from 'next/link';
+
+// Sidebar component with enhanced functionality
+const Sidebar = ({ projects, loadingProjects, onDeleteProject, onCreateProject, user, onAuthenticateAccount, router}) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [newProjectName, setNewProjectName] = useState('');
+  const filteredProjects = projects.filter(project =>
+    project.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
+
+  const handleCreateProject = () => {
+    if (newProjectName.trim()) {
+      onCreateProject({
+        id: Date.now(),
+        name: newProjectName,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        lastModified: new Date().toISOString()
+      });
+      setNewProjectName('');
+      setShowNewProjectDialog(false);
+    }
+  };
+
+  return (
+    <div className="w-80 bg-gray-950 border-r border-gray-800 p-6 flex flex-col text-white min-h-screen">
+      {/* Profile Section */}
+      <div className="flex items-center space-x-3 pb-6 border-b border-gray-800">
+        <div className="relative">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xl font-bold shadow-lg">
+            {user.initials}
+          </div>
+          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-gray-950 ${
+            user.isOnline ? 'bg-green-500' : 'bg-gray-500'
+          }`} />
+        </div>
+        <div className="flex flex-col flex-1">
+          <span className="font-semibold text-gray-100">{user.name}</span>
+          <span className="text-sm text-gray-400 truncate">{user.email}</span>
+        </div>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-800"
+        >
+          <Settings className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Projects Section */}
+      <div className="mt-8 flex flex-col space-y-4 flex-1">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Timelines</h3>
+          <Dialog open={showNewProjectDialog} onOpenChange={setShowNewProjectDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="h-7 px-3 py-1 text-xs text-blue-400 border-blue-400 hover:bg-blue-400 hover:text-gray-900 transition-all duration-200">
+                <Plus className="h-3 w-3 mr-1" />
+                New
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-gray-900 border-gray-700 text-white">
+              <DialogHeader>
+                <DialogTitle className="text-gray-100">Create New Project</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  placeholder="Project name..."
+                  value={newProjectName}
+                  onChange={(e) => setNewProjectName(e.target.value)}
+                  className="bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+                  onKeyPress={(e) => e.key === 'Enter' && handleCreateProject()}
+                />
+                <div className="flex justify-end space-x-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowNewProjectDialog(false)}
+                    className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleCreateProject}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    disabled={!newProjectName.trim()}
+                  >
+                    Create Project
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input 
+            placeholder="Find a project..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 bg-gray-900 border-gray-700 text-white placeholder-gray-500 focus:border-blue-500 transition-colors"
+          />
+        </div>
+
+        <div className="flex-1 overflow-y-auto space-y-2">
+          {loadingProjects ? (
+            <div className="space-y-2 animate-pulse">
+              {[1,2,3].map((i) => (
+                <div key={i} className="h-12 rounded-lg bg-gray-800/50"></div>
+              ))}
+            </div>
+          ) : filteredProjects.length > 0 ? (
+            filteredProjects.map((project) => (
+              <div 
+                key={project.id} 
+                className="group flex items-center justify-between p-3 rounded-lg hover:bg-gray-800 transition-all duration-200 cursor-pointer border border-transparent hover:border-gray-700"
+              >
+                <div className="flex items-center space-x-3 flex-1">
+                  <FolderKanban className="h-4 w-4 text-blue-400 flex-shrink-0" />
+                  <div className="flex flex-col flex-1 min-w-0" onClick={() => router.push(`/timeline/${project.id}`)}>
+                    <span className="text-sm text-gray-200 truncate font-medium">{project.name}</span>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <Badge 
+                        variant="secondary" 
+                        className={`text-xs px-2 py-0.5 ${
+                          project.status === 'active' 
+                            ? 'bg-green-900 text-green-300 border-green-700' 
+                            : project.status === 'paused'
+                            ? 'bg-yellow-900 text-yellow-300 border-yellow-700'
+                            : 'bg-gray-700 text-gray-300 border-gray-600'
+                        }`}
+                      >
+                        {project.status === 'active' && <Clock className="h-3 w-3 mr-1" />}
+                        {project.status}
+                      </Badge>
+                      <span className="text-xs text-gray-500">
+                        {new Date(project.lastModified).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center space-x-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-gray-400 hover:text-red-400 hover:bg-red-900/20"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteProject(project.id);
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <FolderKanban className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No projects found</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="border-t border-gray-800 pt-4 mt-6">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Sign out
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+// Enhanced Right Panel
+const RightPanel = () => {
+  const recentActivity = [
+    {
+      id: 1,
+      type: 'project_created',
+      title: 'New project "Q4 Strategy" created',
+      timestamp: '2 hours ago',
+      icon: Plus,
+      color: 'text-green-400'
+    },
+    {
+      id: 2,
+      type: 'account_connected',
+      title: 'Gmail account connected successfully',
+      timestamp: '4 hours ago',
+      icon: CheckCircle,
+      color: 'text-blue-400'
+    },
+    {
+      id: 3,
+      type: 'project_updated',
+      title: 'Timeline updated for "Marketing Campaign"',
+      timestamp: '6 hours ago',
+      icon: Edit,
+      color: 'text-yellow-400'
+    },
+    {
+      id: 4,
+      type: 'project_deleted',
+      title: 'Project "Old Campaign" was deleted',
+      timestamp: '1 day ago',
+      icon: Trash2,
+      color: 'text-red-400'
+    }
+  ];
+
+  return (
+    <div className="w-72 bg-gray-950 border-l border-gray-800 p-6 flex flex-col text-white">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-semibold text-gray-300">Recent Activity</h3>
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-white">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </div>
+      
+      <div className="space-y-4 flex-1">
+        {recentActivity.map((activity) => {
+          const IconComponent = activity.icon;
+          return (
+            <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-900 transition-colors cursor-pointer">
+              <div className={`flex-shrink-0 mt-1 ${activity.color}`}>
+                <IconComponent className="h-4 w-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-gray-200 font-medium leading-tight">{activity.title}</p>
+                <p className="text-xs text-gray-500 mt-1">{activity.timestamp}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      
+      <div className="border-t border-gray-800 pt-4 mt-6">
+        <Button variant="ghost" className="w-full justify-start text-gray-400 hover:text-white text-sm">
+          View all activity →
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+// Enhanced Home Page
+const HomePage = ({ projects, user, router }) => {
+  const stats = {
+    totalProjects: projects.length,
+    activeProjects: projects.filter(p => p.status === 'active').length,
+    completedProjects: projects.filter(p => p.status === 'completed').length,
+    connectedAccounts: Object.values(user.accounts).filter(Boolean).length
+  };
+
+  const handleNewTimeline = async () => {
+    const result = await createNewTimeline();
+    
+    if (result.error) {
+        alert(result.error); 
+    } else {
+        const newTimelineId = result.data.id;
+        console.log("timeline id: ", newTimelineId);
+        router.push(`/timeline/${newTimelineId}`);
+    }
+};
+
+  return (
+    <div className="p-8 flex-grow overflow-y-auto">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-4xl font-bold text-gray-100 mb-2">Welcome back, {user.name.split(' ')[0]}!</h1>
+          <p className="text-gray-400">Manage your projects and timelines</p>
+        </div>
+        <Button onClick={async () => {await handleNewTimeline();}} className="bg-gradient-to-r from-blue-600 
+        to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 text-white 
+        font-semibold flex items-center space-x-2 rounded-lg px-6 py-3 shadow-lg hover:shadow-xl transform hover:scale-105">
+          <Plus className="h-5 w-5" />
+          <span>New Timeline</span>
+        </Button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-colors">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-sm font-medium">Total Projects</p>
+                <p className="text-2xl font-bold text-gray-100">{stats.totalProjects}</p>
+              </div>
+              <FolderKanban className="h-8 w-8 text-blue-400" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gray-800 border-gray-700 hover:border-green-500 transition-colors">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-sm font-medium">Active Projects</p>
+                <p className="text-2xl font-bold text-gray-100">{stats.activeProjects}</p>
+              </div>
+              <Clock className="h-8 w-8 text-green-400" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gray-800 border-gray-700 hover:border-purple-500 transition-colors">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-sm font-medium">Completed</p>
+                <p className="text-2xl font-bold text-gray-100">{stats.completedProjects}</p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-purple-400" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gray-800 border-gray-700 hover:border-yellow-500 transition-colors">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-sm font-medium">Connected Accounts</p>
+                <p className="text-2xl font-bold text-gray-100">{stats.connectedAccounts}/2</p>
+              </div>
+              <Settings className="h-8 w-8 text-yellow-400" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card className="bg-gray-800 border-gray-700 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold text-gray-200 flex items-center">
+              <Video className="h-6 w-6 mr-2 text-blue-400" />
+              Getting Started
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex justify-center items-center h-64 bg-gray-900 rounded-b-lg">
+            <div className="flex flex-col items-center justify-center text-gray-500 text-center">
+              <Video size={48} className="mb-4 text-blue-400" />
+              <p className="text-lg font-medium mb-2">Watch Tutorial</p>
+              <p className="text-sm text-gray-400 max-w-xs">Learn how to create and manage your project timelines effectively</p>
+              <Button className="mt-4 bg-blue-600 hover:bg-blue-700" size="sm">
+                <Video className="h-4 w-4 mr-2" />
+                Play Video
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-800 border-gray-700 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold text-gray-200 flex items-center">
+              <FolderKanban className="h-6 w-6 mr-2 text-purple-400" />
+              Recent Projects
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="max-h-64 overflow-y-auto">
+              {projects.slice(0, 5).map((project, index) => (
+                <div key={project.id} className={`p-4 hover:bg-gray-700 transition-colors ${index !== projects.slice(0, 5).length - 1 ? 'border-b border-gray-700' : ''}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <FolderKanban className="h-4 w-4 text-blue-400" />
+                      <span className="text-gray-200 font-medium">{project.name}</span>
+                    </div>
+                    <Badge 
+                      variant="secondary" 
+                      className={`text-xs ${
+                        project.status === 'active' 
+                          ? 'bg-green-900 text-green-300' 
+                          : 'bg-gray-700 text-gray-300'
+                      }`}
+                    >
+                      {project.status}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Modified {new Date(project.lastModified).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+              {projects.length === 0 && (
+                <div className="p-4 text-center text-gray-500">
+                  <p>No projects yet. Create your first project to get started!</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default function Page() {
+  const [user, setUser] = useState({
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+    initials: 'JD',
+    isOnline: true,
+    accounts: {
+      gmail: false,
+      googleMeet: false
+    }
+  });
+  const router = useRouter();
+  const [projects, setProjects] = useState([]);
+  const [loadingProjects, setLoadingProjects] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setLoadingProjects(true);
+      const projects = await getProjects();
+      console.log("projects:", projects);
+      setProjects(projects);
+      setLoadingProjects(false);
+    };
+    fetchProjects();
+  }, []);
+
+  const handleDeleteProject = (projectId) => {
+    setProjects(projects.filter(project => project.id !== projectId));
+  };
+
+  const handleCreateProject = (newProject) => {
+    setProjects([...projects, newProject]);
+  };
+
+  const handleAuthenticateAccount = (accountType) => {
+    setTimeout(() => {
+      setUser(prev => ({
+        ...prev,
+        accounts: {
+          ...prev.accounts,
+          [accountType]: true
+        }
+      }));
+    }, 1000);
+  };
+
+  return (
+    <div className="flex bg-gray-950 font-sans min-h-screen">
+      <Sidebar 
+        projects={projects}
+        loadingProjects={loadingProjects}
+        onDeleteProject={handleDeleteProject}
+        onCreateProject={handleCreateProject}
+        user={user}
+        onAuthenticateAccount={handleAuthenticateAccount}
+        router={router}
+      />
+      <main className="flex-grow flex">
+        <HomePage projects={projects} user={user} router={router} />
+        <RightPanel />
+      </main>
+    </div>
+  );
+}
+
+
+```
+
+
+
+
+## File: layout.jsx
+```
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata = {
+  title: "Create Next App",
+  description: "Generated by create next app",
+};
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {children}
+      </body>
+    </html>
+  );
+}
+
+```
+
+
+
+
+## File: page.jsx
+```
+'use client'
+
+import Image from "next/image"
+import { useEffect, useState } from "react"
+
+export default function Page() {
+  const [isVisible, setIsVisible] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
+
+  const controlNavbar = () => {
+    if (typeof window !== "undefined") {
+      if (window.scrollY > lastScrollY && window.scrollY > 100) {
+        setIsVisible(false)
+      } else {
+        setIsVisible(true)
+      }
+      setLastScrollY(window.scrollY)
+    }
+  }
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.addEventListener("scroll", controlNavbar)
+      return () => window.removeEventListener("scroll", controlNavbar)
+    }
+  }, [lastScrollY])
+
+  return (
+    <>
+      <style>{`
+        body { font-family: 'Inter', sans-serif; }
+        .aurora-effect {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 150vw;
+          height: 150vh;
+          background: radial-gradient(circle at center, rgba(124, 58, 237, 0.08), transparent 40%),
+                      radial-gradient(circle at top left, rgba(79, 70, 229, 0.1), transparent 50%),
+                      radial-gradient(circle at bottom right, rgba(168, 85, 247, 0.1), transparent 50%);
+          animation: aurora 20s infinite linear;
+          will-change: transform;
+          z-index: -1;
+        }
+        @keyframes aurora {
+          0% { transform: translate(-50%, -50%) rotate(0deg); }
+          100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        .grid-bg {
+          background-image:
+            linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+          background-size: 30px 30px;
+        }
+        .text-glow {
+          text-shadow: 0 0 10px rgba(192, 132, 252, 0.5), 0 0 25px rgba(124, 58, 237, 0.3);
+        }
+      `}</style>
+
+      <div className="bg-gray-950 text-gray-200 antialiased grid-bg">
+        <div className="relative isolate">
+          <div className="aurora-effect"></div>
+
+          <div className={`fixed top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-4xl z-50 transition-all duration-300 ease-in-out ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-24 opacity-0'}`}>
+            <div className="flex items-center justify-between h-16 px-6 bg-black/30 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl shadow-violet-900/20">
+              <a href="#" className="flex items-center space-x-2">
+                <svg className="h-6 w-6 text-violet-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-xl font-bold text-white">MeetMe</span>
+              </a>
+              <nav className="hidden md:flex items-center space-x-8">
+                <a href="#features" className="text-sm font-medium text-gray-300 hover:text-white transition">Features</a>
+                <a href="#how-it-works" className="text-sm font-medium text-gray-300 hover:text-white transition">How It Works</a>
+              </nav>
+              <a href="#" className="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium text-black bg-white border border-transparent rounded-full shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-violet-500 transition">
+                Get Started
+              </a>
+            </div>
+          </div>
+
+          <main>
+            <section className="relative pt-40 pb-20 sm:pt-48 sm:pb-28 text-center">
+              <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="inline-flex items-center space-x-2 mb-4 px-4 py-1 text-sm font-medium text-violet-300 bg-violet-900/30 rounded-full border border-violet-700/50">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-9a1 1 0 10-2 0v1a1 1 0 102 0v-1zm4 0a1 1 0 10-2 0v1a1 1 0 102 0v-1z" clipRule="evenodd"></path>
+                  </svg>
+                  <span>In Development</span>
+                </div>
+                <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white tracking-tighter">
+                  <span className="text-glow">Optimize your</span><br />
+                  Meetings. Automatically.
+                </h1>
+                <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-300">
+                  MeetMe is the AI agent that automates your pre-meeting prep and post-meeting follow-ups, so you can focus on what matters.
+                </p>
+                <div className="mt-8">
+                  <a href="#" className="inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-medium rounded-full text-black bg-white hover:bg-gray-200 transition-transform hover:scale-105">
+                    Join the Waitlist
+                  </a>
+                </div>
+              </div>
+            </section>
+
+            <section id="features" className="py-20 sm:py-28">
+              <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center mb-16">
+                  <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Features designed to save you time.</h2>
+                </div>
+                <div className="grid md:grid-cols-3 gap-8">
+                  {[
+                    { title: "Smart Summaries", description: "Get concise, AI-generated meeting summaries with key decisions, action items, and next steps." },
+                    { title: "Automated Follow-ups", description: "MeetMe drafts and sends personalized follow-up emails based on meeting discussions." },
+                    { title: "Seamless Integration", description: "Works with your existing calendar and communication tools like Google Meet, Zoom, and Slack." },
+                  ].map((feature, index) => (
+                    <div key={index} className="p-8 bg-black/20 backdrop-blur-lg border border-white/10 rounded-2xl shadow-lg">
+                      <h3 className="text-xl font-bold text-white">{feature.title}</h3>
+                      <p className="mt-4 text-gray-300">{feature.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <section id="how-it-works" className="py-20 sm:py-28">
+              <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="lg:grid lg:grid-cols-2 lg:gap-16 lg:items-center">
+                  <div className="mb-12 lg:mb-0">
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Your agenda, your way.</h2>
+                    <p className="mt-4 max-w-2xl text-lg text-gray-300">MeetMe helps you build a clear, effective agenda before the meeting even starts, ensuring every discussion stays on track.</p>
+                  </div>
+                  <div>
+                    <div className="p-6 bg-black/30 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-violet-900/20">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <svg className="h-12 w-12 text-violet-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2-8H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V8a2 2 0 00-2-2z" />
+                        </svg>
+                        <div>
+                          <h4 className="font-bold text-white">Example Agenda</h4>
+                          <p className="text-sm text-gray-400">Ready for your next meeting</p>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        {[
+                          { item: "Project Alpha: Q3 Review", status: "Completed", color: "text-green-400" },
+                          { item: "Marketing Strategy: New Campaigns", status: "In Progress", color: "text-yellow-400" },
+                          { item: "Team Sync: Action Items", status: "Pending", color: "text-red-400" },
+                        ].map((item) => (
+                          <div key={item.item}>
+                            <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                              <span className="text-sm font-medium text-gray-200">{item.item}</span>
+                              <span className={`text-xs font-semibold ${item.color}`}>{item.status}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="py-20 sm:py-28">
+              <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <div className="p-12 bg-black/20 backdrop-blur-lg border border-white/10 rounded-3xl max-w-4xl mx-auto">
+                  <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Get early access.</h2>
+                  <p className="mt-4 max-w-2xl mx-auto text-lg text-gray-300">Join the waitlist and start having more productive, focused meetings.</p>
+                  <div className="mt-8 flex justify-center">
+                    <form className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
+                      <input type="email" placeholder="your.email@example.com" className="flex-grow px-4 py-3 rounded-full bg-white/5 border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-violet-400 focus:outline-none transition" />
+                      <button type="submit" className="px-6 py-3 rounded-full bg-violet-600 text-white font-semibold hover:bg-violet-700 transition-transform hover:scale-105">Request Access</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </main>
+
+          <footer className="border-t border-white/10">
+            <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
+              <div className="flex flex-col sm:flex-row items-center justify-between">
+                <p className="text-sm text-gray-400">&copy; 2025 MeetMe, Inc. All rights reserved.</p>
+                <div className="flex space-x-6 mt-4 sm:mt-0">
+                  <a href="#" className="text-sm text-gray-400 hover:text-white transition">Twitter</a>
+                  <a href="#" className="text-sm text-gray-400 hover:text-white transition">LinkedIn</a>
+                  <a href="#" className="text-sm text-gray-400 hover:text-white transition">Contact</a>
+                </div>
+              </div>
+            </div>
+          </footer>
+        </div>
+      </div>
+    </>
+  )
+}
+```
+
+
+
+
+## File: client.js
+```
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+export const getUserID = async () =>{
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+    if(userError){
+      console.error(userError);
+      return null;
+    }
+    return user?.id;
+  }
+
+```
+
+
+
+
+## File: server.js
+```
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+
+export async function createClient() {
+  const cookieStore = await cookies();
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // The `setAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+      },
+    }
+  );
+}
+// For API routes - use this version
+export async function createClientForAPI(request, response) {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        getAll() {
+          return Object.entries(request.cookies || {}).map(([name, value]) => ({
+            name,
+            value,
+          }));
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
+}
+
+```
+
+
+
+
+## File: Timeline.jsx
+```
+'use client';
+import React, { useState, useEffect } from 'react';
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Video, Clock, Plus, Settings, X, Calendar, Loader2} from 'lucide-react';
+import WorkflowBox from './WorkflowBox';
+import WorkflowSettingsModal from './WorkflowSettingsModal';
+import {saveTimeline, getBlocks} from '../../actions/timelineActions';
+import {generateUUID} from '@/utils/uuid';
+
+export default function Timeline ({
+  workflowSteps,
+  onAddStep,
+  onUpdateStep,
+  onDeleteStep,
+  onDropStep,
+  onSetSteps,
+  workflowID
+}) {
+  const [editingStep, setEditingStep] = useState(null);
+  const [dragOverPosition, setDragOverPosition] = useState(null);
+  const [openPopover, setOpenPopover] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const sortedSteps = [...workflowSteps].sort((a, b) => a.position - b.position);
+
+  const handleDragOver = (e, position) => {
+    e.preventDefault();
+    setDragOverPosition(position);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverPosition(null);
+  };
+
+  const handleDrop = (e, position) => {
+    e.preventDefault();
+    setDragOverPosition(null);
+    
+    const stepData = e.dataTransfer.getData('application/json');
+    if (stepData) {
+      const step = JSON.parse(stepData);
+      onDropStep({...step, id: generateUUID()}, position);
+    }
+  };
+
+  useEffect(() => {
+    const fetchBlocks = async () => {
+      try{
+        const blocks = await getBlocks(workflowID);
+        console.log("blocks: ", blocks);
+        if(blocks.length > 0){
+          setTimelinePositions([
+            { id: 'meeting', label: 'Meeting Time', position: 0, isMeeting: true, isCustom: false },
+            ...blocks.map(block => ({
+                id: block.id, 
+                label: block.type, 
+                position: block.offset ?? 0, 
+                isMeeting: false, 
+                isCustom: true 
+              }))].sort((a, b) => a.position - b.position)
+          );
+          onSetSteps?.(
+            blocks.map(block => ({
+              id: block.id,
+              position: block.offset ?? 0,
+              type: block.type,
+              prompt: block.prompt,
+            }))
+          );
+        }
+      }
+      catch(error){
+        console.error(error);
+      }
+    };
+    fetchBlocks();
+  }, [])
+  
+  const [timelinePositions, setTimelinePositions] = useState([
+    { id: 'meeting', label: 'Meeting Time', position: 0, isMeeting: true, isCustom: false }
+  ]);
+
+  const addCustomTimePosition = () => {
+    const newId = `custom-${Date.now()}`;
+    const newPosition = {
+      id: newId,
+      label: 'Custom Time',
+      position: -1,
+      isMeeting: false,
+      isCustom: true
+    };
+    setTimelinePositions(prev => [...prev, newPosition].sort((a, b) => a.position - b.position));
+  };
+
+  const updateTimePosition = (id, newLabel, newPosition) => {
+    setTimelinePositions(prev => 
+      prev.map(pos => 
+        pos.id === id ? { ...pos, label: newLabel, position: newPosition } : pos
+      ).sort((a, b) => a.position - b.position)
+    );
+  };
+
+  const removeTimePosition = (id) => {
+    if (id !== 'meeting') {
+      setTimelinePositions(prev => prev.filter(pos => pos.id !== id));
+      const positionToRemove = timelinePositions.find(pos => pos.id === id)?.position;
+      if (positionToRemove !== undefined) {
+        workflowSteps.filter(step => step.position === positionToRemove).forEach(step => {
+          onDeleteStep(step.id);
+        });
+      }
+    }
+  };
+
+  const handleUpdatePrompt = (stepId, newPrompt) => {
+    onUpdateStep({
+      ...workflowSteps.find(step => step.id === stepId),
+      prompt: newPrompt
+    });
+  };
+
+  const handleSaveChanges = async () => {
+    setIsSaving(true);
+    await saveTimeline(sortedSteps, workflowID);
+    setIsSaving(false);
+  };
+
+  return (
+    <div className="flex-1 p-6 bg-gray-900 text-gray-100 min-h-screen">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-100 mb-2">
+                Meeting Workflow Timeline
+              </h1>
+              <p className="text-gray-400">
+                Drag workflow components from the sidebar to build your meeting automation
+              </p>
+            </div>
+            <Button 
+              onClick={addCustomTimePosition} 
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Time Position</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Timeline */}
+        <div className="relative">
+          <div className="absolute left-6 top-0 bottom-0 w-1 rounded-full bg-blue-600" />
+          <div className="space-y-8">
+            {timelinePositions.map((timePos) => {
+              const stepsAtPosition = sortedSteps.filter(step => 
+                step.position === timePos.position
+              );
+
+              return (
+                <div key={timePos.id} className="relative">
+                  <div className="absolute left-3 w-6 h-6 rounded-full border-4 border-gray-900 bg-blue-600 shadow-md" />
+                  
+                  <div className="ml-12 mb-4">
+                    <div className="flex items-center gap-3">
+                      {timePos.isMeeting ? (
+                        <Video className="h-5 w-5 text-blue-600" />
+                      ) : (
+                        <Clock className="h-5 w-5 text-gray-400" />
+                      )}
+                      
+                      <h3 className={`font-semibold ${timePos.isMeeting ? 'text-blue-600' : 'text-gray-200'}`}>
+                        {timePos.label}
+                      </h3>
+                      
+                      {timePos.isMeeting && (
+                        <Badge variant="default" className="bg-blue-600 text-white">
+                          Core Event
+                        </Badge>
+                      )}
+
+                      {timePos.isCustom && (
+                        <div className="flex items-center gap-2">
+                          <Popover open={openPopover === timePos.id} onOpenChange={(isOpen) => setOpenPopover(isOpen ? timePos.id : null)}>
+                            <PopoverTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 p-0 text-gray-400 hover:text-blue-600">
+                                <Settings className="h-4 w-4" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80 bg-gray-800 border-gray-700 shadow-lg text-gray-100">
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="time-label" className="text-gray-200">Position Label</Label>
+                                  <Input
+                                    id="time-label"
+                                    value={timePos.label}
+                                    onChange={(e) => updateTimePosition(timePos.id, e.target.value, timePos.position)}
+                                    placeholder="e.g. 2 hours before"
+                                    className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="time-position" className="text-gray-200">Hours relative to meeting</Label>
+                                  <Input
+                                    id="time-position"
+                                    type="number"
+                                    step="0.5"
+                                    value={timePos.position}
+                                    onChange={(e) => updateTimePosition(timePos.id, timePos.label, parseFloat(e.target.value) || 0)}
+                                    placeholder="-2 for 2 hours before, 1 for 1 hour after"
+                                    className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400"
+                                  />
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Negative = before meeting, Positive = after meeting
+                                  </p>
+                                </div>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
+                            onClick={() => removeTimePosition(timePos.id)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div
+                    className={`ml-12 min-h-[60px] rounded-lg border-2 border-dashed transition-all duration-300
+                      ${dragOverPosition === timePos.position
+                        ? 'border-blue-600 bg-blue-600/10'
+                        : 'border-transparent hover:border-blue-600/30'
+                      }`}
+                    onDragOver={(e) => handleDragOver(e, timePos.position)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, timePos.position)}
+                  >
+                    {timePos.isMeeting && (
+                      <Card className="bg-gray-800 border-2 border-blue-600 shadow-lg mb-4 text-gray-200">
+                        <div className="p-6 text-center">
+                          <Video className="h-8 w-8 text-blue-600 mx-auto mb-3" />
+                          <h4 className="font-semibold text-gray-100 mb-2">
+                            Google Meet Session
+                          </h4>
+                          <p className="text-sm text-gray-400 mb-4">
+                            Your scheduled meeting will happen here
+                          </p>
+                          <Button variant="outline" size="sm" className="bg-gray-900 shadow-sm border border-gray-700 text-gray-200 hover:bg-gray-800">
+                            <Calendar className="h-4 w-4 mr-2" />
+                            Connect Google Meet
+                          </Button>
+                        </div>
+                      </Card>
+                    )}
+
+                    <div className="space-y-4">
+                      {stepsAtPosition.map((step) => (
+                        <WorkflowBox
+                          key={step.id}
+                          step={step}
+                          isTimelineItem={true}
+                          onEdit={setEditingStep}
+                          onDelete={onDeleteStep}
+                          // --- FIX: Pass the update handler to the child component ---
+                          onUpdatePrompt={handleUpdatePrompt}
+                        />
+                      ))}
+                    </div>
+
+                    {stepsAtPosition.length === 0 && !timePos.isMeeting && (
+                      <div className="flex items-center justify-center h-16 text-gray-500">
+                        <Plus className="h-4 w-4 mr-2" />
+                        <span className="text-sm">Drop workflow here</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+      <div className="max-w-4xl mx-auto w-full mt-6">
+        <Button
+          className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+          onClick={handleSaveChanges}
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+            </>
+          ) 
+          : "Save Changes"}
+        </Button>
+      </div>
+      {editingStep && (
+        <WorkflowSettingsModal
+          step={editingStep}
+          onSave={(updatedStep) => {
+            onUpdateStep(updatedStep);
+            setEditingStep(null);
+          }}
+          onClose={() => setEditingStep(null)}
+        />
+      )}
+    </div>
+  );
+}
+```
+
+
+
+
+## File: WorkflowBox.jsx
+```
+import React from 'react';
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { GripVertical, Settings, Trash2, Zap, Mail, HardDrive, Video, Bot, FileText, MessageCircle, Calendar, Edit3 } from 'lucide-react';
+
+// Helper function to get the Lucide icon component by name
+const getIconComponent = (iconName) => {
+  const icons = { Mail, HardDrive, Video, Bot, FileText, MessageCircle, Calendar, Zap };
+  const IconComponent = icons[iconName] || icons.Zap;
+  return <IconComponent className="h-5 w-5 text-gray-400" />;
+};
+
+export default function WorkflowBox({ step, isTimelineItem, onEdit, onDelete, onUpdatePrompt }) {
+  const [isEditingPrompt, setIsEditingPrompt] = React.useState(false);
+  const [promptValue, setPromptValue] = React.useState(step.prompt || '');
+  
+  // --- FIX: Add a useEffect to sync the internal state with the prop ---
+  // This ensures that if the prompt is updated from the parent, the editing
+  // state reflects that change.
+  React.useEffect(() => {
+    setPromptValue(step.prompt || '');
+  }, [step.prompt]);
+
+  const handleDragStart = (e) => {
+    e.dataTransfer.setData('application/json', JSON.stringify(step));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handlePromptSave = () => {
+    if (onUpdatePrompt) {
+      onUpdatePrompt(step.id, promptValue);
+    }
+    setIsEditingPrompt(false);
+  };
+
+  const handlePromptCancel = () => {
+    setPromptValue(step.prompt || '');
+    setIsEditingPrompt(false);
+  };
+
+  return (
+    <Card
+      className={`bg-gray-800 shadow-md rounded-lg ${isTimelineItem ? 'border-l-4 border-l-blue-600' : ''}`}
+      draggable={!isTimelineItem}
+      onDragStart={!isTimelineItem ? handleDragStart : undefined}
+    >
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            {!isTimelineItem && <GripVertical className="h-4 w-4 text-gray-500" />}
+            {isTimelineItem ? getIconComponent(step.iconName) : getIconComponent(step.iconName)}
+            <div>
+              <h4 className="font-medium text-gray-100">{step.type}</h4>
+              {step.config?.description && (
+                <p className="text-sm text-gray-400">{step.config.description}</p>
+              )}
+            </div>
+          </div>
+          {isTimelineItem && (
+            <div className="flex gap-2">
+              <Button size="icon" variant="ghost" onClick={() => onEdit(step)} className="h-7 w-7 text-gray-400 hover:text-blue-600">
+                <Settings className="h-4 w-4" />
+              </Button>
+              <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:text-red-700" onClick={() => onDelete(step.id)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+        
+        {/* Prompt Section */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm text-gray-300">AI Prompt</Label>
+            {isTimelineItem && !isEditingPrompt && (
+              <Button
+                size="sm"
+                variant="ghost" 
+                onClick={() => setIsEditingPrompt(true)}
+                className="h-6 w-6 p-0 text-gray-400 hover:text-blue-600"
+              >
+                <Edit3 className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+          
+          {isEditingPrompt ? (
+            <div className="space-y-2">
+              <Textarea
+                value={promptValue}
+                onChange={(e) => setPromptValue(e.target.value)}
+                placeholder="Enter AI prompt for this workflow step..."
+                rows={3}
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handlePromptSave} className="bg-blue-600 hover:bg-blue-700 text-white text-xs">
+                  Save
+                </Button>
+                <Button size="sm" variant="outline" onClick={handlePromptCancel} className="border-gray-600 text-gray-400 text-xs">
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="min-h-[40px] p-2 bg-gray-700 rounded border border-gray-600">
+              {step.prompt ? (
+                <p className="text-sm text-gray-200">{step.prompt}</p>
+              ) : (
+                <p className="text-sm text-gray-500 italic">No prompt set. Click edit to add one.</p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+```
+
+
+
+
+## File: WorkflowSettingsModal.jsx
+```
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+export default function WorkflowSettingsModal({ step, onSave, onClose }) {
+  const [config, setConfig] = useState(step.config || {});
+  const [prompt, setPrompt] = useState(step.prompt || '');
+
+  const handleSave = () => {
+    onSave({ ...step, config, prompt });
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="bg-gray-900 border-gray-700 text-gray-100 shadow-lg">
+        <DialogHeader>
+          <DialogTitle className="text-gray-100">Edit {step.type} Settings</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label className="text-gray-200">Description</Label>
+            <Input
+              value={config.description || ''}
+              onChange={(e) => setConfig({ ...config, description: e.target.value })}
+              placeholder="Enter step description"
+              className="bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400"
+            />
+          </div>
+          <div>
+            <Label className="text-gray-200">AI Prompt</Label>
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Enter AI prompt for this workflow step..."
+              className="w-full p-3 bg-gray-800 border border-gray-700 rounded text-gray-100 placeholder-gray-400 resize-none"
+              rows={4}
+            />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-4">
+          <Button variant="outline" onClick={onClose} className="border-gray-700 text-gray-400 hover:bg-gray-800 hover:text-gray-100">Cancel</Button>
+          <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white">Save</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+```
+
+
+
+
+## File: WorkflowSidebar.jsx
+```
+import React from 'react';
+import { Card } from "@/components/ui/card";
+import { GripVertical, Mail, HardDrive, Video, Bot, FileText, MessageCircle, Calendar, Zap } from 'lucide-react';
+
+// Helper function to get the Lucide icon component by name
+const getIconComponent = (iconName) => {
+  const icons = { Mail, HardDrive, Video, Bot, FileText, MessageCircle, Calendar, Zap };
+  const IconComponent = icons[iconName];
+  return <IconComponent className="h-5 w-5 text-gray-400" />;
+};
+
+export default function WorkflowSidebar() {
+  const handleDragStart = (e, step) => {
+    // Fix: Create a new object without the React element to prevent circular reference error.
+    const sanitizedStep = { ...step };
+    delete sanitizedStep.icon; 
+    e.dataTransfer.setData('application/json', JSON.stringify(sanitizedStep));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+  const sidebarSteps = [
+    { id: 'custom-prompt', type: 'Custom AI Task', iconName: 'Zap', description: 'Create a custom AI task with your own prompt', isCustom: true },
+    { id: 'email-collector', type: 'Email Collector', iconName: 'Mail', description: 'Gather and filter emails based on keywords, sender, and date range' },
+    { id: 'drive-fetcher', type: 'Drive Fetcher', iconName: 'HardDrive', description: 'Pull relevant documents and files from Google Drive or other sources' },
+    { id: 'meeting-recorder', type: 'Meeting Recorder', iconName: 'Video', description: 'Record and transcribe the meeting automatically' },
+    { id: 'summary-generator', type: 'Summary Generator', iconName: 'Bot', description: 'Generate meeting summary and send to participants' },
+    { id: 'action-item-extractor', type: 'Action Item Extractor', iconName: 'FileText', description: 'Extract and assign action items from meeting transcript' },
+    { id: 'slack-sender', type: 'Slack Sender', iconName: 'MessageCircle', description: 'Send a message to a Slack channel' },
+    { id: 'google-task', type: 'Google Task', iconName: 'Calendar', description: 'Create and assign a task in Google Tasks' },
+  ];
+
+  return (
+     <div className="overflow-y-auto h-full w-80 flex-shrink-0 border-r border-gray-800 bg-gray-950 p-6 flex flex-col scrollbar-blue-thin">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-gray-100 mb-1">Workflow Components</h2>
+        <p className="text-gray-400 text-sm">Drag to timeline</p>
+      </div>
+      <div className="flex-1 space-y-4 pr-2">
+        {sidebarSteps.map((step) => (
+          <Card
+            key={step.id}
+            className="bg-gray-800 shadow-md rounded-lg cursor-grab active:cursor-grabbing border border-transparent hover:border-gray-700"
+            draggable
+            onDragStart={(e) => handleDragStart(e, step)}
+          >
+            <div className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <GripVertical className="h-4 w-4 text-gray-500" />
+                {getIconComponent(step.iconName)}
+                <div>
+                  <h4 className="font-medium text-gray-100">{step.type}</h4>
+                  <p className="text-sm text-gray-400">{step.description}</p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+
+
+
+## File: page.jsx
+```
+'use client';
+import React, { useState } from 'react';
+import WorkflowSidebar from './WorkflowSidebar';
+import Timeline from './Timeline';
+
+const Dashboard = ({params}) => {
+  const [workflowSteps, setWorkflowSteps] = useState([]);
+  const handleAddStep = (step) => {
+    setWorkflowSteps(prev => [...prev, step]);
+  };
+
+  const handleUpdateStep = (updatedStep) => {
+    setWorkflowSteps(prev => 
+      prev.map(step => step.id === updatedStep.id ? updatedStep : step)
+    );
+  };
+
+  const handleSetSteps = (steps) => {
+    setWorkflowSteps(steps);
+  }
+
+  const handleDeleteStep = (id) => {
+    setWorkflowSteps(prev => prev.filter(step => step.id !== id));
+  };
+
+  const handleDropStep = (step, position) => {
+    const stepWithPosition = { ...step, position };
+    const existingStepIndex = workflowSteps.findIndex(s => s.id === step.id);
+    
+    if (existingStepIndex >= 0) {
+      handleUpdateStep(stepWithPosition);
+    } else {
+      handleAddStep(stepWithPosition);
+    }
+  };
+
+
+  return (
+    <div className="min-h-screen flex bg-background">
+      <WorkflowSidebar />
+      <Timeline
+        workflowSteps={workflowSteps}
+        onAddStep={handleAddStep}
+        onUpdateStep={handleUpdateStep}
+        onDeleteStep={handleDeleteStep}
+        onDropStep={handleDropStep}
+        onSetSteps={handleSetSteps}
+        workflowID={React.use(params).workflow_id}
+      />
+    </div>
+  );
+};
+
+export default Dashboard;
+
+```
+
+
+
+
 ## File: components.json
 ```
 {
@@ -169,6 +2129,885 @@ To complete the implementation:
 
 
 
+## File: badge.tsx
+```
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const badgeVariants = cva(
+  "inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden",
+  {
+    variants: {
+      variant: {
+        default:
+          "border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
+        secondary:
+          "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
+        destructive:
+          "border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        outline:
+          "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+function Badge({
+  className,
+  variant,
+  asChild = false,
+  ...props
+}: React.ComponentProps<"span"> &
+  VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
+  const Comp = asChild ? Slot : "span"
+
+  return (
+    <Comp
+      data-slot="badge"
+      className={cn(badgeVariants({ variant }), className)}
+      {...props}
+    />
+  )
+}
+
+export { Badge, badgeVariants }
+
+```
+
+
+
+
+## File: button.tsx
+```
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  {
+    variants: {
+      variant: {
+        default:
+          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        outline:
+          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
+        ghost:
+          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
+        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        icon: "size-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+function Button({
+  className,
+  variant,
+  size,
+  asChild = false,
+  ...props
+}: React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean
+  }) {
+  const Comp = asChild ? Slot : "button"
+
+  return (
+    <Comp
+      data-slot="button"
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
+}
+
+export { Button, buttonVariants }
+
+```
+
+
+
+
+## File: card.jsx
+```
+import * as React from "react";
+import { cn } from "@/lib/utils";
+
+function Card({ className, ...props }) {
+  return (
+    <div
+      data-slot="card"
+      className={cn(
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+function CardHeader({ className, ...props }) {
+  return (
+    <div
+      data-slot="card-header"
+      className={cn(
+        "@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+function CardTitle({ className, ...props }) {
+  return (
+    <div
+      data-slot="card-title"
+      className={cn("leading-none font-semibold", className)}
+      {...props}
+    />
+  );
+}
+
+function CardDescription({ className, ...props }) {
+  return (
+    <div
+      data-slot="card-description"
+      className={cn("text-muted-foreground text-sm", className)}
+      {...props}
+    />
+  );
+}
+
+function CardAction({ className, ...props }) {
+  return (
+    <div
+      data-slot="card-action"
+      className={cn(
+        "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+function CardContent({ className, ...props }) {
+  return (
+    <div
+      data-slot="card-content"
+      className={cn("px-6", className)}
+      {...props}
+    />
+  );
+}
+
+function CardFooter({ className, ...props }) {
+  return (
+    <div
+      data-slot="card-footer"
+      className={cn("flex items-center px-6 [.border-t]:pt-6", className)}
+      {...props}
+    />
+  );
+}
+
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardAction,
+  CardDescription,
+  CardContent,
+};
+
+```
+
+
+
+
+## File: dialog.tsx
+```
+"use client"
+
+import * as React from "react"
+import * as DialogPrimitive from "@radix-ui/react-dialog"
+import { XIcon } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+function Dialog({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Root>) {
+  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+}
+
+function DialogTrigger({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
+  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
+}
+
+function DialogPortal({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
+  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
+}
+
+function DialogClose({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Close>) {
+  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
+}
+
+function DialogOverlay({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+  return (
+    <DialogPrimitive.Overlay
+      data-slot="dialog-overlay"
+      className={cn(
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DialogContent({
+  className,
+  children,
+  showCloseButton = true,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  showCloseButton?: boolean
+}) {
+  return (
+    <DialogPortal data-slot="dialog-portal">
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        data-slot="dialog-content"
+        className={cn(
+          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        {showCloseButton && (
+          <DialogPrimitive.Close
+            data-slot="dialog-close"
+            className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+          >
+            <XIcon />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
+        )}
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  )
+}
+
+function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-header"
+      className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
+      {...props}
+    />
+  )
+}
+
+function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-footer"
+      className={cn(
+        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DialogTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Title>) {
+  return (
+    <DialogPrimitive.Title
+      data-slot="dialog-title"
+      className={cn("text-lg leading-none font-semibold", className)}
+      {...props}
+    />
+  )
+}
+
+function DialogDescription({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Description>) {
+  return (
+    <DialogPrimitive.Description
+      data-slot="dialog-description"
+      className={cn("text-muted-foreground text-sm", className)}
+      {...props}
+    />
+  )
+}
+
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+}
+
+```
+
+
+
+
+## File: dropdown-menu.tsx
+```
+"use client"
+
+import * as React from "react"
+import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
+import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+function DropdownMenu({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
+  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+}
+
+function DropdownMenuPortal({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Portal>) {
+  return (
+    <DropdownMenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />
+  )
+}
+
+function DropdownMenuTrigger({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger>) {
+  return (
+    <DropdownMenuPrimitive.Trigger
+      data-slot="dropdown-menu-trigger"
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuContent({
+  className,
+  sideOffset = 4,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
+  return (
+    <DropdownMenuPrimitive.Portal>
+      <DropdownMenuPrimitive.Content
+        data-slot="dropdown-menu-content"
+        sideOffset={sideOffset}
+        className={cn(
+          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border p-1 shadow-md",
+          className
+        )}
+        {...props}
+      />
+    </DropdownMenuPrimitive.Portal>
+  )
+}
+
+function DropdownMenuGroup({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Group>) {
+  return (
+    <DropdownMenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />
+  )
+}
+
+function DropdownMenuItem({
+  className,
+  inset,
+  variant = "default",
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Item> & {
+  inset?: boolean
+  variant?: "default" | "destructive"
+}) {
+  return (
+    <DropdownMenuPrimitive.Item
+      data-slot="dropdown-menu-item"
+      data-inset={inset}
+      data-variant={variant}
+      className={cn(
+        "focus:bg-accent focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:focus:text-destructive data-[variant=destructive]:*:[svg]:!text-destructive [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuCheckboxItem({
+  className,
+  children,
+  checked,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem>) {
+  return (
+    <DropdownMenuPrimitive.CheckboxItem
+      data-slot="dropdown-menu-checkbox-item"
+      className={cn(
+        "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      checked={checked}
+      {...props}
+    >
+      <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
+        <DropdownMenuPrimitive.ItemIndicator>
+          <CheckIcon className="size-4" />
+        </DropdownMenuPrimitive.ItemIndicator>
+      </span>
+      {children}
+    </DropdownMenuPrimitive.CheckboxItem>
+  )
+}
+
+function DropdownMenuRadioGroup({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.RadioGroup>) {
+  return (
+    <DropdownMenuPrimitive.RadioGroup
+      data-slot="dropdown-menu-radio-group"
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuRadioItem({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.RadioItem>) {
+  return (
+    <DropdownMenuPrimitive.RadioItem
+      data-slot="dropdown-menu-radio-item"
+      className={cn(
+        "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      {...props}
+    >
+      <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
+        <DropdownMenuPrimitive.ItemIndicator>
+          <CircleIcon className="size-2 fill-current" />
+        </DropdownMenuPrimitive.ItemIndicator>
+      </span>
+      {children}
+    </DropdownMenuPrimitive.RadioItem>
+  )
+}
+
+function DropdownMenuLabel({
+  className,
+  inset,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Label> & {
+  inset?: boolean
+}) {
+  return (
+    <DropdownMenuPrimitive.Label
+      data-slot="dropdown-menu-label"
+      data-inset={inset}
+      className={cn(
+        "px-2 py-1.5 text-sm font-medium data-[inset]:pl-8",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuSeparator({
+  className,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Separator>) {
+  return (
+    <DropdownMenuPrimitive.Separator
+      data-slot="dropdown-menu-separator"
+      className={cn("bg-border -mx-1 my-1 h-px", className)}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuShortcut({
+  className,
+  ...props
+}: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="dropdown-menu-shortcut"
+      className={cn(
+        "text-muted-foreground ml-auto text-xs tracking-widest",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuSub({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Sub>) {
+  return <DropdownMenuPrimitive.Sub data-slot="dropdown-menu-sub" {...props} />
+}
+
+function DropdownMenuSubTrigger({
+  className,
+  inset,
+  children,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.SubTrigger> & {
+  inset?: boolean
+}) {
+  return (
+    <DropdownMenuPrimitive.SubTrigger
+      data-slot="dropdown-menu-sub-trigger"
+      data-inset={inset}
+      className={cn(
+        "focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[inset]:pl-8",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <ChevronRightIcon className="ml-auto size-4" />
+    </DropdownMenuPrimitive.SubTrigger>
+  )
+}
+
+function DropdownMenuSubContent({
+  className,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
+  return (
+    <DropdownMenuPrimitive.SubContent
+      data-slot="dropdown-menu-sub-content"
+      className={cn(
+        "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden rounded-md border p-1 shadow-lg",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export {
+  DropdownMenu,
+  DropdownMenuPortal,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+}
+
+```
+
+
+
+
+## File: input.tsx
+```
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  return (
+    <input
+      type={type}
+      data-slot="input"
+      className={cn(
+        "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Input }
+
+```
+
+
+
+
+## File: label.tsx
+```
+"use client"
+
+import * as React from "react"
+import * as LabelPrimitive from "@radix-ui/react-label"
+
+import { cn } from "@/lib/utils"
+
+function Label({
+  className,
+  ...props
+}: React.ComponentProps<typeof LabelPrimitive.Root>) {
+  return (
+    <LabelPrimitive.Root
+      data-slot="label"
+      className={cn(
+        "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Label }
+
+```
+
+
+
+
+## File: popover.tsx
+```
+"use client"
+
+import * as React from "react"
+import * as PopoverPrimitive from "@radix-ui/react-popover"
+
+import { cn } from "@/lib/utils"
+
+function Popover({
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Root>) {
+  return <PopoverPrimitive.Root data-slot="popover" {...props} />
+}
+
+function PopoverTrigger({
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
+  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
+}
+
+function PopoverContent({
+  className,
+  align = "center",
+  sideOffset = 4,
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+  return (
+    <PopoverPrimitive.Portal>
+      <PopoverPrimitive.Content
+        data-slot="popover-content"
+        align={align}
+        sideOffset={sideOffset}
+        className={cn(
+          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-72 origin-(--radix-popover-content-transform-origin) rounded-md border p-4 shadow-md outline-hidden",
+          className
+        )}
+        {...props}
+      />
+    </PopoverPrimitive.Portal>
+  )
+}
+
+function PopoverAnchor({
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
+  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
+}
+
+export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor }
+
+```
+
+
+
+
+## File: separator.tsx
+```
+"use client"
+
+import * as React from "react"
+import * as SeparatorPrimitive from "@radix-ui/react-separator"
+
+import { cn } from "@/lib/utils"
+
+function Separator({
+  className,
+  orientation = "horizontal",
+  decorative = true,
+  ...props
+}: React.ComponentProps<typeof SeparatorPrimitive.Root>) {
+  return (
+    <SeparatorPrimitive.Root
+      data-slot="separator"
+      decorative={decorative}
+      orientation={orientation}
+      className={cn(
+        "bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Separator }
+
+```
+
+
+
+
+## File: textarea.tsx
+```
+// components/ui/textarea.tsx
+import * as React from "react";
+
+export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(
+  ({ className, ...props }, ref) => (
+    <textarea
+      ref={ref}
+      className={`w-full rounded-md border border-gray-600 bg-gray-700 p-2 text-gray-100 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 ${className}`}
+      {...props}
+    />
+  )
+);
+Textarea.displayName = "Textarea";
+
+```
+
+
+
+
+## File: tooltip.tsx
+```
+"use client"
+
+import * as React from "react"
+import * as TooltipPrimitive from "@radix-ui/react-tooltip"
+
+import { cn } from "@/lib/utils"
+
+function TooltipProvider({
+  delayDuration = 0,
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
+  return (
+    <TooltipPrimitive.Provider
+      data-slot="tooltip-provider"
+      delayDuration={delayDuration}
+      {...props}
+    />
+  )
+}
+
+function Tooltip({
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+  return (
+    <TooltipProvider>
+      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+    </TooltipProvider>
+  )
+}
+
+function TooltipTrigger({
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
+  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
+}
+
+function TooltipContent({
+  className,
+  sideOffset = 0,
+  children,
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+  return (
+    <TooltipPrimitive.Portal>
+      <TooltipPrimitive.Content
+        data-slot="tooltip-content"
+        sideOffset={sideOffset}
+        className={cn(
+          "bg-primary text-primary-foreground animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit origin-(--radix-tooltip-content-transform-origin) rounded-md px-3 py-1.5 text-xs text-balance",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        <TooltipPrimitive.Arrow className="bg-primary fill-primary z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]" />
+      </TooltipPrimitive.Content>
+    </TooltipPrimitive.Portal>
+  )
+}
+
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+
+```
+
+
+
+
 ## File: generate-key.js
 ```
 import crypto from 'crypto';
@@ -176,6 +3015,20 @@ import crypto from 'crypto';
 const key = crypto.randomBytes(16).toString('hex');
 
 console.log(key);
+```
+
+
+
+
+## File: utils.ts
+```
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
 ```
 
 
@@ -8107,6 +10960,30 @@ export default nextConfig;
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/page.jsx", "app/layout.jsx", "components/ui/card.jsx"],
   "exclude": ["node_modules"]
+}
+
+```
+
+
+
+
+## File: uuid.js
+```
+// UUID v4 generation utility
+export function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+// Alternative using crypto.randomUUID if available (more secure)
+export function generateSecureUUID() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return generateUUID();
 }
 
 ```

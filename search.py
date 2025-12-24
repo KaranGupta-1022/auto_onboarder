@@ -2,45 +2,32 @@ import chromadb
 from sentence_transformers import SentenceTransformer 
 
 def main():
-    # Initialize the embedding model
-    model = SentenceTransformer('all-MiniLM-L6-v2')
-    
-    # Create CHromaDB client
+    model = SentenceTransformer('all-MiniLM-L12-v2')
     client = chromadb.PersistentClient(path="./chroma_db")
     collection = client.get_or_create_collection(name="repo_docs")
     
-    # Error handling for non-existent collection
-    if collection is None:
-        print("Collection 'repo_docs' does not exist.")
-        return
-    
     while True:
-        query = input("Enter your query (or 'exit' to quit): ")
-        query = query.strip()
-        if query.lower() == 'exit':
-            break
-        if not query:
-            print("Please enter a valid query.")
-            continue
-        # Create a embedding for the query
-        query_embedding = model.encode(query).tolist()
-        #Look for similiar chuncks in repo_docs 
+        query = input("\nWhat do you want to find in the code? (or 'exit'): ")
+        if query.lower() == 'exit': break
+        
+        # Proper list-of-lists embedding
+        query_embedding = [model.encode(query).tolist()]
+        
         results = collection.query( 
             query_embeddings=query_embedding,
-            n_results=5, # number of similar results to retrieve
+            n_results=5,
         )
         
-        # Printing the results 
-        print(f"Top {len(results['ids'])} results for query: '{query}'")
         if results['documents'] and results['documents'][0]:
-            for i, (doc, scores) in enumerate(zip(results['documents'][0], results   ['distances'][0]), 1):
-                similarity = 1 - scores # Convert distance to similarity
-                print(f"{i}. [Similarity: {similarity:.2%}]")
-                print(f" {doc[:200]}")  
+            print(f"\nFound {len(results['documents'][0])} relevant snippets:")
+            for i, (doc, score) in enumerate(zip(results['documents'][0], results['distances'][0]), 1):
+                # Cosine distance is returned; smaller is better.
+                # If score is > 1.2, it's probably not a good match.
+                print(f"{i}. [Distance Score: {score:.4f}]") 
+                print(f"{doc[:500]}...") # Print more context
                 print("-" * 40)
         else: 
-            print("No results found.")
-            
+            print("No relevant code found.")
+
 if __name__ == "__main__":
     main()
-        
