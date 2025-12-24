@@ -24,7 +24,7 @@ def main():
     # Initialize the embedding model
     model = SentenceTransformer('all-MiniLM-L6-v2')
     # Create ChromDB client
-    client = chromadb.Client()
+    client = chromadb.PersistentClient(path="./chroma_db")
     # Getting (or creating) a collection
     collection = client.get_or_create_collection(name="repo_docs")
 

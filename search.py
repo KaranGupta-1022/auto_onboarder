@@ -6,7 +6,7 @@ def main():
     model = SentenceTransformer('all-MiniLM-L6-v2')
     
     # Create CHromaDB client
-    client = chromadb.Client()
+    client = chromadb.PersistentClient(path="./chroma_db")
     collection = client.get_or_create_collection(name="repo_docs")
     
     # Error handling for non-existent collection
