@@ -5,8 +5,8 @@ def main():
     # Initialize the embedding model
     model = SentenceTransformer('all-MiniLM-L6-v2')
     
-    # Create CHromeDB client
-    client = chromeadb.Client()
+    # Create CHromaDB client
+    client = chromadb.Client()
     collection = client.get_or_create_collection(name="repo_docs")
     
     # Error handling for non-existent collection
@@ -23,7 +23,7 @@ def main():
             print("Please enter a valid query.")
             continue
         # Create a embedding for the query
-        query_embedding = model.edncode(query).tolist()
+        query_embedding = model.encode(query).tolist()
         #Look for similiar chuncks in repo_docs 
         results = collection.query( 
             query_embeddings=query_embedding,
