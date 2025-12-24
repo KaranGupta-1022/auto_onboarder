@@ -1,6 +1,8 @@
 crawl4ai
-sentence-transformers
+requests
+playwright
+chromium
 chromadb
+sentence-transformers
 fastapi
 uvicorn
-requests
