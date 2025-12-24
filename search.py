@@ -8,11 +8,10 @@ def main():
     
     while True:
         query = input("\nWhat do you want to find in the code? (or 'exit'): ")
-        if query.lower() == 'exit': break
+        if query.lower() == 'exit': 
+            break
         
-        # Proper list-of-lists embedding
         query_embedding = [model.encode(query).tolist()]
-        
         results = collection.query( 
             query_embeddings=query_embedding,
             n_results=5,

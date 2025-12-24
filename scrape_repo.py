@@ -20,9 +20,11 @@ async def main():
             items = response.json()
             for item in items:
                 if item['type'] == 'file':
+                    # scrape only important file types
                     name = item['name']
                     if name.endswith(('.md', '.py', '.js', '.ts', '.json', '.yaml', '.yml', '.txt', '.jsx', '.tsx')):
                         important_files.append(item['download_url'])
+                # Recursively fetch from subdirectories
                 elif item['type'] == 'dir':
                         await fetch_all_files(path=item['path'])
         except Exception as e:
