@@ -1,5 +1,5 @@
-import chromeadb 
-from setence_transformers import SentenceTransformer
+import chromadb 
+from sentence_transformers import SentenceTransformer
 import os 
 
 def main():
@@ -23,8 +23,8 @@ def main():
 
     # Initialize the embedding model
     model = SentenceTransformer('all-MiniLM-L6-v2')
-    # Create CHromeDB client
-    client = chromeadb.Client()
+    # Create ChromDB client
+    client = chromadb.Client()
     # Getting (or creating) a collection
     collection = client.get_or_create_collection(name="repo_docs")
 
