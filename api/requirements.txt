@@ -1,6 +1,6 @@
 fastapi 
 univorn 
-chromab 
+chromadb
 sentence-transformer 
 crawl4ai 
 pydantic 
