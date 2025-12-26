@@ -66,7 +66,7 @@ def main():
         )
         print(f"Stored {i + len(batch_text)}/{len(useful_chunks)}")
 
-    print("\n✅ Database updated with hashed IDs and Metadata!")
+    print("\nDatabase updated with hashed IDs and Metadata!")
 
 if __name__ == "__main__":
     main()

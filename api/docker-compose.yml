@@ -1,0 +1,42 @@
+services:
+  chroma:
+    image: ghcr.io/chroma-core/chroma:latest
+    container_name: auto_onboarder-chroma
+    ports:
+      - "8001:8000"
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma_data
+    volumes:
+      - chroma_data:/chroma_data
+    networks:
+      - auto_onboarder-network
+
+  api:
+    build: .
+    container_name: auto_onboarder-api
+    ports:
+      - "8000:8000"
+    environment:
+      - CHROMA_HOST=chroma
+      - CHROMA_PORT=8000
+      - CHROMA_PATH=/chroma_data
+      - EMBED_MODEL_NAME=all-MiniLM-L6-v2
+      - CHROMA_COLLECTION_NAME=repo_docs
+      - LOG_LEVEL=INFO
+      - API_PORT=8000
+    depends_on:
+      - chroma
+    volumes:
+      - ./:/app
+    networks:
+      - auto_onboarder-network
+    command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  chroma_data:
+    driver: local
+
+networks:
+  auto_onboarder-network:
+    driver: bridge

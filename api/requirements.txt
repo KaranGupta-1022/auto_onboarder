@@ -1,0 +1,8 @@
+fastapi 
+univorn 
+chromab 
+sentence-transformer 
+crawl4ai 
+pydantic 
+python-dotenv 
+requests
