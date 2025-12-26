@@ -1,7 +1,7 @@
 # Repository: SiddharthUmachandran/MeetMe
 
 
-## File: README.md
+## File Path: README.md
 ```
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
@@ -45,7 +45,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 
 
-## File: WORKFLOW_BLOCKS_README.md
+## File Path: WORKFLOW_BLOCKS_README.md
 ```
 # Workflow Blocks Implementation
 
@@ -141,7 +141,7 @@ To complete the implementation:
 
 
 
-## File: page.jsx
+## File Path: app/(Auth)/authentication/page.jsx
 ```
 'use client';
 
@@ -290,7 +290,7 @@ export default function Page() {
 
 
 
-## File: Icons.jsx
+## File Path: app/Icons.jsx
 ```
 export const LogoIcon = () => (
     <svg className="h-8 w-8 text-violet-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
@@ -325,7 +325,7 @@ export const LogoIcon = () => (
 
 
 
-## File: timelineActions.js
+## File Path: app/actions/timelineActions.js
 ```
 'use server';
 
@@ -453,7 +453,7 @@ export async function saveTimeline(sortedSteps, workflow_id){
 
 
 
-## File: route.js
+## File Path: app/api/workflows/[workflow_id]/blocks/route.js
 ```
 import { NextResponse } from 'next/server';
 import { createClient } from '../../../../supabase/server';
@@ -554,7 +554,7 @@ export async function GET(request, { params }) {
 
 
 
-## File: route.js
+## File Path: app/auth/callback/route.js
 ```
 // app/auth/callback/route.js
 import { NextResponse } from "next/server";
@@ -633,7 +633,7 @@ export async function GET(request) {
 
 
 
-## File: page.jsx
+## File Path: app/dashboard/page.jsx
 ```
 'use client';
 import React, { useState, useEffect} from 'react';
@@ -1140,7 +1140,7 @@ export default function Page() {
 
 
 
-## File: layout.jsx
+## File Path: app/layout.jsx
 ```
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -1176,7 +1176,7 @@ export default function RootLayout({ children }) {
 
 
 
-## File: page.jsx
+## File Path: app/page.jsx
 ```
 'use client'
 
@@ -1380,7 +1380,7 @@ export default function Page() {
 
 
 
-## File: client.js
+## File Path: app/supabase/client.js
 ```
 import { createClient } from '@supabase/supabase-js'
 
@@ -1406,7 +1406,7 @@ export const getUserID = async () =>{
 
 
 
-## File: server.js
+## File Path: app/supabase/server.js
 ```
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
@@ -1465,7 +1465,7 @@ export async function createClientForAPI(request, response) {
 
 
 
-## File: Timeline.jsx
+## File Path: app/timeline/[workflow_id]/Timeline.jsx
 ```
 'use client';
 import React, { useState, useEffect } from 'react';
@@ -1790,7 +1790,7 @@ export default function Timeline ({
 
 
 
-## File: WorkflowBox.jsx
+## File Path: app/timeline/[workflow_id]/WorkflowBox.jsx
 ```
 import React from 'react';
 import { Card } from "@/components/ui/card";
@@ -1916,7 +1916,7 @@ export default function WorkflowBox({ step, isTimelineItem, onEdit, onDelete, on
 
 
 
-## File: WorkflowSettingsModal.jsx
+## File Path: app/timeline/[workflow_id]/WorkflowSettingsModal.jsx
 ```
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
@@ -1972,7 +1972,7 @@ export default function WorkflowSettingsModal({ step, onSave, onClose }) {
 
 
 
-## File: WorkflowSidebar.jsx
+## File Path: app/timeline/[workflow_id]/WorkflowSidebar.jsx
 ```
 import React from 'react';
 import { Card } from "@/components/ui/card";
@@ -2039,7 +2039,7 @@ export default function WorkflowSidebar() {
 
 
 
-## File: page.jsx
+## File Path: app/timeline/[workflow_id]/page.jsx
 ```
 'use client';
 import React, { useState } from 'react';
@@ -2101,7 +2101,7 @@ export default Dashboard;
 
 
 
-## File: components.json
+## File Path: components.json
 ```
 {
   "$schema": "https://ui.shadcn.com/schema.json",
@@ -2129,7 +2129,7 @@ export default Dashboard;
 
 
 
-## File: badge.tsx
+## File Path: components/ui/badge.tsx
 ```
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
@@ -2183,7 +2183,7 @@ export { Badge, badgeVariants }
 
 
 
-## File: button.tsx
+## File Path: components/ui/button.tsx
 ```
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
@@ -2250,7 +2250,7 @@ export { Button, buttonVariants }
 
 
 
-## File: card.jsx
+## File Path: components/ui/card.jsx
 ```
 import * as React from "react";
 import { cn } from "@/lib/utils";
@@ -2349,7 +2349,7 @@ export {
 
 
 
-## File: dialog.tsx
+## File Path: components/ui/dialog.tsx
 ```
 "use client"
 
@@ -2500,7 +2500,7 @@ export {
 
 
 
-## File: dropdown-menu.tsx
+## File Path: components/ui/dropdown-menu.tsx
 ```
 "use client"
 
@@ -2765,7 +2765,7 @@ export {
 
 
 
-## File: input.tsx
+## File Path: components/ui/input.tsx
 ```
 import * as React from "react"
 
@@ -2794,7 +2794,7 @@ export { Input }
 
 
 
-## File: label.tsx
+## File Path: components/ui/label.tsx
 ```
 "use client"
 
@@ -2826,7 +2826,7 @@ export { Label }
 
 
 
-## File: popover.tsx
+## File Path: components/ui/popover.tsx
 ```
 "use client"
 
@@ -2882,7 +2882,7 @@ export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor }
 
 
 
-## File: separator.tsx
+## File Path: components/ui/separator.tsx
 ```
 "use client"
 
@@ -2918,7 +2918,7 @@ export { Separator }
 
 
 
-## File: textarea.tsx
+## File Path: components/ui/textarea.tsx
 ```
 // components/ui/textarea.tsx
 import * as React from "react";
@@ -2939,7 +2939,7 @@ Textarea.displayName = "Textarea";
 
 
 
-## File: tooltip.tsx
+## File Path: components/ui/tooltip.tsx
 ```
 "use client"
 
@@ -3008,7 +3008,7 @@ export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
 
 
 
-## File: generate-key.js
+## File Path: generate-key.js
 ```
 import crypto from 'crypto';
 
@@ -3020,7 +3020,7 @@ console.log(key);
 
 
 
-## File: utils.ts
+## File Path: lib/utils.ts
 ```
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
@@ -3034,7 +3034,7 @@ export function cn(...inputs: ClassValue[]) {
 
 
 
-## File: next.config.ts
+## File Path: next.config.ts
 ```
 import type { NextConfig } from "next";
 
@@ -3049,7 +3049,7 @@ export default nextConfig;
 
 
 
-## File: package-lock.json
+## File Path: package-lock.json
 ```
 {
   "name": "my-app",
@@ -10873,7 +10873,7 @@ export default nextConfig;
 
 
 
-## File: package.json
+## File Path: package.json
 ```
 {
   "name": "my-app",
@@ -10930,7 +10930,7 @@ export default nextConfig;
 
 
 
-## File: tsconfig.json
+## File Path: tsconfig.json
 ```
 {
   "compilerOptions": {
@@ -10967,7 +10967,7 @@ export default nextConfig;
 
 
 
-## File: uuid.js
+## File Path: utils/uuid.js
 ```
 // UUID v4 generation utility
 export function generateUUID() {

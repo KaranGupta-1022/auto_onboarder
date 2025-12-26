@@ -7,26 +7,37 @@ def main():
     collection = client.get_or_create_collection(name="repo_docs")
     
     while True:
-        query = input("\nWhat do you want to find in the code? (or 'exit'): ")
-        if query.lower() == 'exit': 
-            break
+        user_input = input("\nWhat do you want to find in the code? (or 'exit'): ")
+        if user_input.lower() == 'exit': break
         
-        query_embedding = [model.encode(query).tolist()]
+        # Optimization: Query Expansion
+        # If the user asks "which file", we implicitly prioritize code files
+        search_query = user_input
+        if "file" in user_input.lower() or "code" in user_input.lower():
+            search_query = f"definition of {user_input} in source code"
+
+        query_embedding = model.encode(search_query).tolist()
+        
         results = collection.query( 
-            query_embeddings=query_embedding,
+            query_embeddings=[query_embedding],
             n_results=5,
+            # Option: You could add a filter here like: where={"is_code": True}
         )
         
         if results['documents'] and results['documents'][0]:
-            print(f"\nFound {len(results['documents'][0])} relevant snippets:")
-            for i, (doc, score) in enumerate(zip(results['documents'][0], results['distances'][0]), 1):
-                # Cosine distance is returned; smaller is better.
-                # If score is > 1.2, it's probably not a good match.
-                print(f"{i}. [Distance Score: {score:.4f}]") 
-                print(f"{doc[:500]}...") # Print more context
+            print(f"\nFound relevant snippets:")
+            for i, (doc, score, meta) in enumerate(zip(results['documents'][0], results['distances'][0], results['metadatas'][0]), 1):
+                
+                # Filter out "Garbage" matches
+                if score > 1.3:
+                    continue
+                
+                print(f"{i}. [Score: {score:.4f}] PATH: {meta['path']}") 
+                # Print the middle of the chunk to avoid just seeing headers
+                print(f"{doc[:600]}...") 
                 print("-" * 40)
         else: 
-            print("No relevant code found.")
+            print("No high-confidence matches found.")
 
 if __name__ == "__main__":
     main()
