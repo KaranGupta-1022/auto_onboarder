@@ -9,7 +9,7 @@ def get_hash(text):
 def main():
     if not os.path.exists("repo_content.md"):
         print("Run scraper first.")
-        return 
+        return                               
     
     with open("repo_content.md", "r", encoding="utf-8") as f:
         content = f.read()
