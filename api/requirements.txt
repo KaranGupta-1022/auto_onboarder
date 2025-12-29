@@ -1,8 +1,8 @@
 fastapi 
-univorn 
+uvicorn 
 chromadb
-sentence-transformer 
-crawl4ai 
+sentence-transformers 
+crawl4ai
 pydantic 
 python-dotenv 
 requests

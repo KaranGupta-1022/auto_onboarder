@@ -1,3 +1,5 @@
+version: 'version 3.8'
+
 services:
   chroma:
     image: ghcr.io/chroma-core/chroma:latest
