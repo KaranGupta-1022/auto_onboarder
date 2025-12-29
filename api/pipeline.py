@@ -1,8 +1,8 @@
-import asynico 
+import asyncio 
 import logging 
 from sentence_transformers import SentenceTransformer
 import chromadb
-from crawl4ai import Crawl4AIClient
+from crawl4ai import *
 
 from .config import Config
 
@@ -15,7 +15,7 @@ collection = client.get_or_create_collection(name=Config.CHROMA_COLLECTION_NAME)
 # Initialize embedding model
 embedding_model = SentenceTransformer(Config.EMBED_MODEL_NAME)
 
-def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> List[str]: 
+def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]: 
     chunks = []
     for i in range(0, len(text), chunk_size - overlap):
         chunk = text[i : i + chunk_size]
@@ -24,7 +24,7 @@ def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> List[str]
     return chunks
 
 # Scrape a URL, chunk its content, embed, and store in ChromaDB
-async def ingest_url(url: str, source_type: str = "repo", metadata: Dict[str, Any] = None) -> Dict[str, Any]:
+async def ingest_url(url: str, source_type: str = "repo", metadata: dict[str, any] = None) -> dict[str, any]:
     try:
         logger.info(f"Starting ingestion for URL: {url}")
         
@@ -80,7 +80,7 @@ async def ingest_url(url: str, source_type: str = "repo", metadata: Dict[str, An
         }
         
 # Search for relevent chunks given a query
-def search_ghost_notes(query: str, top_results: int = 5) -> Dict[str, Any]:
+def search_ghost_notes(query: str, top_results: int = 5) -> dict[str, any]:
     try: 
         logger.info(f"Searching for query: {query}")
         

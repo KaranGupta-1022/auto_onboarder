@@ -6,7 +6,7 @@ import uvicorn
 import asyncio
 
 from .config import config
-from .models import IngestRequest, IngestResponse, GhostNoteRequest, ErrorResponse
+from .models import IngestRequest, IngestResponse, GhostNoteRequest, GhostNoteResponse, ErrorResponse
 from .pipeline import ingest_url, search_ghost_notes
 
 
