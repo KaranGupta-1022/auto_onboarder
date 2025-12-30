@@ -1,6 +1,9 @@
 import asyncio 
 import logging 
-from sentence_transformers import SentenceTransformer
+import hashlib
+import requests
+import json
+from sentence_transformers import SentenceTransformer, CrossEncoder
 import chromadb
 from crawl4ai import *
 
@@ -8,12 +11,19 @@ from .config import Config
 
 logger = logging.getLogger(__name__)
 
-# Initialize ChromaDB client and collection
+# 1. Initialize Clients & Models
 client = chromadb.PersistentClient(path=Config.CHROMA_PATH)
 collection = client.get_or_create_collection(name=Config.CHROMA_COLLECTION_NAME)
 
-# Initialize embedding model
+# Embedding model (Bi-Encoder)
 embedding_model = SentenceTransformer(Config.EMBED_MODEL_NAME)
+
+# Optimization: Cross-Encoder for Reranking (Production Grade Search)
+reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+
+def get_chunk_id(url: str, content: str):
+    """Generates a unique ID to prevent duplicates."""
+    return hashlib.sha256(f"{url}_{content}".encode()).hexdigest()
 
 def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]: 
     chunks = []
@@ -23,7 +33,6 @@ def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]
             chunks.append(chunk)
     return chunks
 
-# Scrape a URL, chunk its content, embed, and store in ChromaDB
 async def ingest_url(url: str, source_type: str = "repo", metadata: dict[str, any] = None) -> dict[str, any]:
     """
     Scrape a URL, chunk it, embed it, and store in ChromaDB.
@@ -31,25 +40,24 @@ async def ingest_url(url: str, source_type: str = "repo", metadata: dict[str, an
     try:
         logger.info(f"Starting ingestion for URL: {url}")
         
-        # Step 1: Fetch the page using requests (simpler, Windows-friendly)
-        import requests
+        # Step 1: Fetch
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         
-        markdown_content = response.text[:5000]  # Limit to first 5000 chars for testing
+        markdown_content = response.text[:10000] # Increased limit slightly
+        filename = url.split("/")[-1]
         
-        logger.info(f"Fetched {len(markdown_content)} characters from {url}")
-        
-        # Step 2: Chunk the content
+        # Step 2: Chunk
         chunks = chunk_text(markdown_content)
         logger.info(f"Created {len(chunks)} chunks")
         
-        # Step 3: Embed and store each chunk
+        # Step 3: Embed and Store
         for i, chunk in enumerate(chunks, 1):
-            # Create embedding
-            embedding = embedding_model.encode(chunk)
+            # Optimization: Contextual Chunking (prepend filename)
+            contextual_content = f"FILE: {filename}\n{chunk}"
+            embedding = embedding_model.encode(contextual_content)
             
-            # Prepare metadata - FLAT ONLY (no nested dicts)
+            # Metadata flattening (to avoid ChromaDB dict errors)
             chunk_metadata = {
                 "source_url": url,
                 "source_type": source_type,
@@ -57,27 +65,24 @@ async def ingest_url(url: str, source_type: str = "repo", metadata: dict[str, an
                 "total_chunks": len(chunks),
             }
             
-            # Add user metadata if provided, but flatten it
             if metadata:
                 for key, value in metadata.items():
-                    # Convert complex types to strings
                     if isinstance(value, (str, int, float, bool, type(None))):
                         chunk_metadata[key] = value
                     else:
-                        # Convert dicts, lists, etc. to JSON strings
-                        import json
                         chunk_metadata[key] = json.dumps(value)
             
-            # Store in ChromaDB
-            collection.add(
-                ids=[f"{url}_{i}"],
+            # Optimization: Upsert with unique IDs to prevent DB bloat
+            collection.upsert(
+                ids=[get_chunk_id(url, chunk)],
                 embeddings=[embedding.tolist()],
-                documents=[chunk],
+                documents=[contextual_content],
                 metadatas=[chunk_metadata]
             )
         
         logger.info(f"Successfully stored {len(chunks)} chunks")
         
+        # FIXED: Returning all fields required by your Pydantic IngestResponse model
         return {
             "status": "success",
             "chunks_ingested": len(chunks),
@@ -93,55 +98,52 @@ async def ingest_url(url: str, source_type: str = "repo", metadata: dict[str, an
             "total_characters": 0,
             "message": f"Error: {str(e)}"
         }
-        
-# Search for relevent chunks given a query
+
 def search_ghost_notes(query: str, top_results: int = 5) -> dict[str, any]:
     try: 
         logger.info(f"Searching for query: {query}")
         
-        # Check if collection is empty
         if collection.count() == 0:
-            logger.warning("Repo Notes are empty")
-            return {
-                "query": query,
-                "results": []
-            }
+            return {"query": query, "results": []}
             
-        # Generate embedding for the query
         query_embedding = embedding_model.encode(query).tolist()
-        # Perform the search
-        search_results = collection.query (
+        
+        # Stage 1: Retrieval (Get 10 candidates)
+        search_results = collection.query(
             query_embeddings=[query_embedding],
-            n_results=top_results,
+            n_results=10,
             include=['documents', 'metadatas', 'distances']
         )
-        # Format results
+
         results = []
         if search_results["documents"] and search_results["documents"][0]:
-            for doc, metadata, distance in zip(
-                search_results["documents"][0],
-                search_results["metadatas"][0],
-                search_results["distances"][0]
-            ):
-                # Convert distance to similarity 
-                relevance_score = 1 - (distance / 2) # Assuming distances are in [0, 2]
-                relevance_score = max(0.0, min(1.0, relevance_score)) # Clamp between 0 and 1
-                
+            docs = search_results["documents"][0]
+            metas = search_results["metadatas"][0]
+
+            # Stage 2: Reranking (Cross-Encoder)
+            # This makes the "relevance_score" much more accurate than simple vector distance
+            pairs = [[query, doc] for doc in docs]
+            scores = reranker.predict(pairs)
+
+            for i in range(len(docs)):
+                # Normalize score to 0-1
+                import numpy as np
+                norm_score = 1 / (1 + np.exp(-scores[i])) 
+
                 results.append({
-                    "text": doc[:300] + "..." if len(doc) > 300 else doc, # Truncate long texts
-                    "relevance_score": relevance_score,
-                    "metadata": metadata
+                    "text": docs[i][:300] + "..." if len(docs[i]) > 300 else docs[i],
+                    "relevance_score": float(norm_score),
+                    "metadata": metas[i]
                 })
+            
+            # Sort by reranked score
+            results.sort(key=lambda x: x["relevance_score"], reverse=True)
         
-        logger.info(f"Found {len(results)} results for query: {query}")
         return {
             "query": query,
-            "results": results
+            "results": results[:top_results]
         }        
         
     except Exception as e:
         logger.error(f"Error during search: {str(e)}")
-        return {
-            "query": query,
-            "results": []
-        }
+        return {"query": query, "results": []}
