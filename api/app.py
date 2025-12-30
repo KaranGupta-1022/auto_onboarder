@@ -72,7 +72,7 @@ async def ingest_endpoint(request: IngestRequest):
     # **top_k**: Number of top results to return (default: 5)
 
 
-app.post("/ghost-note", response_model=GhostNoteResponse)
+@app.post("/ghost-note", response_model=GhostNoteResponse)
 async def ghost_note_endpoint(request: GhostNoteRequest):
     """
     Search for relevant ghost notes.
@@ -80,10 +80,10 @@ async def ghost_note_endpoint(request: GhostNoteRequest):
     - **q**: Search query (e.g., 'Auth service error')
     - **top_k**: Number of results to return (default: 3)
     """
-    logger.info(f"Received search query: {request.q}")
+    logger.info(f"Received search query: {request.query}")
     
     try:
-        result = search_ghost_notes(query=request.q, top_k=request.top_k)
+        result = search_ghost_notes(query=request.query, top_results=request.top_results)
         return GhostNoteResponse(**result)
     
     except Exception as e:
