@@ -8,6 +8,7 @@ import asyncio
 from .config import config
 from .models import IngestRequest, IngestResponse, GhostNoteRequest, GhostNoteResponse, ErrorResponse
 from .pipeline import ingest_url, search_ghost_notes
+from starlette.responses import JSONResponse
 
 
 # Setup logging
@@ -106,10 +107,13 @@ async def root():
 # Error Handler
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
-    return {
-        "error": exc.detail,
-        "status_code": exc.status_code
-    }
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": exc.detail,
+            "status_code": exc.status_code
+        }
+    )
     
 if __name__ == "__main__":
     uvicorn.run(

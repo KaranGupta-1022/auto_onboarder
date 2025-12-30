@@ -25,56 +25,71 @@ def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]
 
 # Scrape a URL, chunk its content, embed, and store in ChromaDB
 async def ingest_url(url: str, source_type: str = "repo", metadata: dict[str, any] = None) -> dict[str, any]:
+    """
+    Scrape a URL, chunk it, embed it, and store in ChromaDB.
+    """
     try:
         logger.info(f"Starting ingestion for URL: {url}")
         
-        # Fetch content using Crawl4AI
-        async with AsyncWebCrawler() as crawler:
-            result = await crawler.arun(url=url, source_type=source_type)
-            markdown_content = result.markdown_content
-            
-        logger.info(f"Scraped {len(markdown_content)} chracters from {url}")
+        # Step 1: Fetch the page using requests (simpler, Windows-friendly)
+        import requests
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
         
-        # Chunk the content
+        markdown_content = response.text[:5000]  # Limit to first 5000 chars for testing
+        
+        logger.info(f"Fetched {len(markdown_content)} characters from {url}")
+        
+        # Step 2: Chunk the content
         chunks = chunk_text(markdown_content)
         logger.info(f"Created {len(chunks)} chunks")
         
-        # Embed and Store each chunk
+        # Step 3: Embed and store each chunk
         for i, chunk in enumerate(chunks, 1):
-            # Generate embedding
-            embedding = embedding_model.encode(chunk).tolist()
-            # Prepare metadata
+            # Create embedding
+            embedding = embedding_model.encode(chunk)
+            
+            # Prepare metadata - FLAT ONLY (no nested dicts)
             chunk_metadata = {
-                "source_url" : url,
+                "source_url": url,
                 "source_type": source_type,
-                "chunk_index": i,
+                "chunk_number": i,
                 "total_chunks": len(chunks),
-            } 
-            if metadata:
-                chunk_metadata.update(metadata)
-                
-            # Add to ChromaDB
-            collection.add(
-                ids=[f"{url}_chunk_{i}"],
-                embeddings=[embedding],
-                documents=[chunk],
-                metadatas=[chunk_metadata],
-            )
-            
-            logger.info(f"Successfully stored {len(chunks)} chunks")
-            
-            return {
-                "status": "error",
-                "chunks_ingested": len(chunks),
-                "total_characters": len(markdown_content),
-                "message" : f"Ingested {len(chunks)} chunks from {url}"
             }
             
+            # Add user metadata if provided, but flatten it
+            if metadata:
+                for key, value in metadata.items():
+                    # Convert complex types to strings
+                    if isinstance(value, (str, int, float, bool, type(None))):
+                        chunk_metadata[key] = value
+                    else:
+                        # Convert dicts, lists, etc. to JSON strings
+                        import json
+                        chunk_metadata[key] = json.dumps(value)
+            
+            # Store in ChromaDB
+            collection.add(
+                ids=[f"{url}_{i}"],
+                embeddings=[embedding.tolist()],
+                documents=[chunk],
+                metadatas=[chunk_metadata]
+            )
+        
+        logger.info(f"Successfully stored {len(chunks)} chunks")
+        
+        return {
+            "status": "success",
+            "chunks_ingested": len(chunks),
+            "total_characters": len(markdown_content),
+            "message": f"Ingested {len(chunks)} chunks from {url}"
+        }
+    
     except Exception as e:
         logger.error(f"Error during ingestion: {str(e)}")
         return {
             "status": "error",
-            "chunk_ingested": 0,
+            "chunks_ingested": 0,
             "total_characters": 0,
             "message": f"Error: {str(e)}"
         }
