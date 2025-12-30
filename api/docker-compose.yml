@@ -1,4 +1,4 @@
-version: 'version 3.8'
+version: '3.8'
 
 services:
   chroma:
@@ -20,20 +20,19 @@ services:
     ports:
       - "8000:8000"
     environment:
+      # Use the service name 'chroma' to communicate over the network
       - CHROMA_HOST=chroma
       - CHROMA_PORT=8000
-      - CHROMA_PATH=/chroma_data
-      - EMBED_MODEL_NAME=all-MiniLM-L6-v2
       - CHROMA_COLLECTION_NAME=repo_docs
-      - LOG_LEVEL=INFO
-      - API_PORT=8000
+      - EMBED_MODEL_NAME=all-MiniLM-L6-v2
     depends_on:
       - chroma
     volumes:
       - ./:/app
     networks:
       - auto_onboarder-network
-    command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+    # Use array form for CMD/Command to handle signals correctly
+    command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 volumes:
   chroma_data:
