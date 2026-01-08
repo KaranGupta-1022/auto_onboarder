@@ -80,7 +80,7 @@ async def ghost_note_endpoint(request: GhostNoteRequest):
     - **q**: Search query (e.g., 'Auth service error')
     - **top_k**: Number of results to return (default: 3)
     """
-    logger.info(f"Received search query: {request.query}")
+    logger.info(f"Received search query: {request.q}")
     
     try:
         result = search_ghost_notes(query=request.query, top_results=request.top_results)
