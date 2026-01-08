@@ -12,6 +12,28 @@ run: python -m uvicorn api.app:app --reload --host 0.0.0.0 --port 8000
 
 ---
 
+## Creating the kind cluster
+
+kind create cluster --name ghostkube --config kind-config.yaml
+Confirm context and nodes
+kubectl config current-context
+kubectl cluster-info --context kind-ghostkube
+kubectl get nodes
+kubectl get pods -A
+Apply the sample app (sample.yaml)
+kubectl apply -f sample.yaml
+Verify the pod is created and labeled
+kubectl get pods -l ghostkube.io/service=auth-service -A
+kubectl describe pod $(kubectl get pods -l ghostkube.io/service=auth-service -o jsonpath='{.items[0].metadata.name}')
+5 . Check environment variables inside the pod (most containers use sh)
+$POD = kubectl get pods -l ghostkube.io/service=auth-service -o jsonpath='{.items[0].metadata.name}'
+kubectl exec -it $POD -- sh -c "printenv | grep GHOST_NOTE_ID || echo 'GHOST_NOTE_ID not set'"
+(Optional) If you built any local images and need to load into kind (Won't work b/c we have no webhook)
+docker build -t my-webhook:dev ./path/to/webhook
+kind load docker-image my-webhook:dev --name ghostkube
+When finished, delete the cluster
+kind delete cluster --name ghostkube
+
 ## Completed Work - Phase 1 & Phase 2
 
 ### ✅ Phase 1: Planning & Setup
