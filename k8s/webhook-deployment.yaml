@@ -1,0 +1,44 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata: 
+  name: ghostkube-webhook
+  labels:
+    app: ghostkube-webhook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ghostkube-webhook
+  template:
+    metadata:
+      labels:
+        app: ghostkube-webhook
+    spec:
+      containers: 
+        - name: webhook 
+          image: ghostkube-webhook:dev # build locally and load into kind, or replace with your registry image
+          ports:
+            - containerPort: 8443
+          volumeMounts:
+            - name: tls
+              mountPath: /tls
+              readOnly: true
+      volumes:
+        - name: tls
+          secret:
+            secretName: webhook-tls
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ghostkube-webhook
+  labels:
+    app: ghostkube-webhook
+spec:
+  ports:
+    - port: 443
+      targetPort: 8443
+      protocol: TCP
+  selector:
+    app: ghostkube-webhook

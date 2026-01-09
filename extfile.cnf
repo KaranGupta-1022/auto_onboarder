@@ -1,0 +1,1 @@
+subjectAltName = DNS:ghostkube-webhook, DNS:ghostkube-webhook.default.svc, DNS:ghostkube-webhook.default.svc.cluster.local
