@@ -1,0 +1,8 @@
+venv/
+chroma_db/
+.git/
+__pycache__/
+*.md
+k8s/
+webhook/
+design/

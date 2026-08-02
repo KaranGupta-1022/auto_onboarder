@@ -22,16 +22,6 @@ nodes:
       - containerPort: 8080
         hostPort: 8080
         protocol: TCP
-    
-    # Mount local directories into the container (optional)
-    extraMounts:
-      # Mount your local code/data into the cluster for development
-      - hostPath: ./chroma_db
-        containerPath: /chroma_db
-        readOnly: false
-      - hostPath: ./config
-        containerPath: /config
-        readOnly: true
 
 # Disable default CNI and use kindnet (default is fine)
 networking:

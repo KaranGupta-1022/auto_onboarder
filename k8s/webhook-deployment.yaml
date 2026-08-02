@@ -1,9 +1,19 @@
-apiVersion : apps/v1
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ghostkube
+---
+# The webhook-server-tls Secret is deliberately NOT defined here. Create it from
+# the real cert files so private key material never lands in a tracked manifest:
+#
+#   kubectl create secret tls webhook-server-tls \
+#     --cert=server.crt --key=server.key -n ghostkube
+---
+apiVersion: apps/v1
 kind: Deployment
-metadata: 
+metadata:
   name: ghostkube-webhook
-  labels:
-    app: ghostkube-webhook
+  namespace: ghostkube
 spec:
   replicas: 1
   selector:
@@ -14,11 +24,12 @@ spec:
       labels:
         app: ghostkube-webhook
     spec:
-      containers: 
-        - name: webhook 
-          image: ghostkube-webhook:dev # build locally and load into kind, or replace with your registry image
+      containers:
+        - name: webhook
+          image: ghostkube/webhook:dev   # build+load to kind or push to registry
+          imagePullPolicy: IfNotPresent  # use the image side-loaded via `kind load`
           ports:
-            - containerPort: 8443
+            - containerPort: 443
           volumeMounts:
             - name: tls
               mountPath: /tls
@@ -26,19 +37,17 @@ spec:
       volumes:
         - name: tls
           secret:
-            secretName: webhook-tls
-
+            secretName: webhook-server-tls
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: ghostkube-webhook
-  labels:
-    app: ghostkube-webhook
+  name: ghostkube-webhook-svc
+  namespace: ghostkube
 spec:
-  ports:
-    - port: 443
-      targetPort: 8443
-      protocol: TCP
   selector:
     app: ghostkube-webhook
+  ports:
+    - port: 443
+      targetPort: 443
+      protocol: TCP

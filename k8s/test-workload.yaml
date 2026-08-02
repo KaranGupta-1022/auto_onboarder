@@ -1,0 +1,63 @@
+# GhostKube webhook test fixtures.
+#
+#   kubectl apply -f k8s/test-workload.yaml
+#
+# Positive case: hello-auth carries ghostkube.io/service, so the mutating
+# webhook must inject GHOST_NOTE_ID=auth-service into its container.
+# Negative case: hello-nolabel carries no label, so it must come out untouched.
+# Both together are what make "the webhook mutates everything" and "the webhook
+# mutates the right things" distinguishable.
+#
+# Verify:
+#   kubectl exec deploy/hello-auth -- printenv GHOST_NOTE_ID   # -> auth-service
+#   kubectl exec pod/hello-nolabel -- printenv GHOST_NOTE_ID   # -> non-zero exit
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-auth
+  labels:
+    app: hello-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-auth
+  template:
+    metadata:
+      labels:
+        app: hello-auth
+        ghostkube.io/service: "auth-service"
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:stable
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-auth-svc
+spec:
+  selector:
+    app: hello-auth
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+# Negative control: no ghostkube.io/service label, so the objectSelector on the
+# MutatingWebhookConfiguration should keep the webhook from ever being called.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hello-nolabel
+  labels:
+    app: hello-nolabel
+spec:
+  containers:
+    - name: nginx
+      image: nginx:stable
+      command: ["/bin/sh", "-c", "sleep 3600"]
