@@ -60,6 +60,12 @@ def chunk_file(full_path: str, block: str):
         metadatas.append({
             "path": full_path,
             "extension": extension,
+            # Reserved for the Phase 12 Console's code/prose toggle. Deliberately
+            # NOT used as a `where=` filter at query time: Phase 4 measured that
+            # filtering on is_code alone does not improve retrieval, and the
+            # docs-outrank-code problem it was meant to solve was fixed by
+            # file-level pooling instead. Kept rather than dropped because
+            # removing it means SCHEMA_VERSION 3 and a full reindex.
             "is_code": extension not in ['.md', '.txt'],
             "schema": SCHEMA_VERSION,
         })
