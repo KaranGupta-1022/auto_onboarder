@@ -1,0 +1,23 @@
+[
+  {
+    "_comment": "INCOMPLETE SET. The published MeetMe numbers (100% hit@1 on the Crawl4AI-rendered corpus, 75% hit@1 / 92% hit@3 after the switch to raw requests) were measured over 12 queries. Only the 4 the guide names explicitly are seeded here - the other 8 were never written down. Fill this to 12 entries before treating any run of this file as reproducing those figures.",
+    "query": null,
+    "expected_path": null
+  },
+  {
+    "query": "how does supabase authentication work",
+    "expected_path": "app/supabase/server.js"
+  },
+  {
+    "query": "timeline workflow box component",
+    "expected_path": "WorkflowBox.jsx"
+  },
+  {
+    "query": "what dependencies does this project use",
+    "expected_path": "package.json"
+  },
+  {
+    "query": "workflow settings modal",
+    "expected_path": "WorkflowSettingsModal.jsx"
+  }
+]

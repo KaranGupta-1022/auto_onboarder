@@ -1,0 +1,15 @@
+[
+  {
+    "_comment": "INCOMPLETE SET. The published f1_undercut_engine numbers (70% hit@1 / 90% hit@3 as shipped, rising to 75% / 95% with near-empty-file skipping plus file-level pooling) were measured over 20 queries. Only the 2 the guide names explicitly are seeded here - the other 18 were never written down. Fill this to 20 entries before treating any run of this file as reproducing those figures.",
+    "query": null,
+    "expected_path": null
+  },
+  {
+    "query": "kafka producer that streams telemetry",
+    "expected_path": "producer.py"
+  },
+  {
+    "query": "how is the undercut window calculated",
+    "expected_path": "strategy_engine.py"
+  }
+]
