@@ -1,8 +1,18 @@
-crawl4ai
-requests
-playwright
-chromium
-chromadb
-sentence-transformers
-fastapi
-uvicorn
+# Direct dependencies only; transitives are left to pip's resolver on purpose -
+# a full `pip freeze` dump is unreadable and pins things that should be free to
+# move.
+#
+# These versions are kept IN LOCK-STEP with api/requirements.txt. They diverged
+# once, and local search returned different rankings than the container for the
+# same query against the same index - a correctness hazard, not a style nit.
+# playwright is the one entry here that api/requirements.txt does not carry: the
+# API gets it transitively via crawl4ai, while scrape_repo.py imports it directly.
+crawl4ai==0.9.2
+requests==2.34.2
+playwright==1.57.0
+chromadb==1.5.9
+sentence-transformers==5.6.1
+fastapi==0.141.1
+uvicorn==0.52.1
+pydantic==2.13.4
+python-dotenv==1.2.2

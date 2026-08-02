@@ -3,11 +3,9 @@
 # Transitive deps are deliberately left to pip's resolver - a full freeze dump is
 # unreadable and pins things that should be free to move.
 #
-# NOTE: these are all NEWER than the root requirements.txt, which is pinned to
-# the local venv (e.g. sentence-transformers 5.6.1 here vs 5.2.0 there). The two
-# environments return different retrieval rankings for the same query against the
-# same index - see the Phase 6 note in GhostKube_Guide.md. Align them before
-# trusting a local search result to predict container behaviour.
+# Kept in lock-step with the root requirements.txt. Do not let them drift: an
+# index embedded by one version and queried by another is the failure mode to
+# avoid, not the version numbers themselves.
 fastapi==0.141.1
 uvicorn==0.52.1
 chromadb==1.5.9
