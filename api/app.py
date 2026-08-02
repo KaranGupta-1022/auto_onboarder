@@ -6,8 +6,14 @@ import uvicorn
 import asyncio
 
 from .config import config
-from .models import IngestRequest, IngestResponse, GhostNoteRequest, GhostNoteResponse, ErrorResponse
-from .pipeline import ingest_url, search_ghost_notes
+from .models import (
+    IngestRequest, IngestResponse, GhostNoteRequest, GhostNoteResponse,
+    FeedbackRequest, FeedbackResponse, ErrorResponse,
+)
+from .pipeline import (
+    ingest_url, search_ghost_notes, health_snapshot,
+    record_feedback, feedback_summary,
+)
 from starlette.responses import JSONResponse
 
 
@@ -33,12 +39,17 @@ app.add_middleware(
 
 # Health Check Endpoint
 @app.get("/health")
-async def health_check():
-    """Health check endpoint."""
+def health_check():
+    """Health check that can actually fail.
+
+    Touches ChromaDB rather than returning a hardcoded 'ok' - Phase 9's readiness
+    probe is worthless if this cannot report a broken vector store.
+    """
+    snapshot = health_snapshot()
     return {
-        "status": "ok",
         "service": "GhostKube Brain API",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        **snapshot,
     }
     
 # Ingest Endpoint
@@ -73,12 +84,18 @@ async def ingest_endpoint(request: IngestRequest):
 
 
 @app.post("/ghost-note", response_model=GhostNoteResponse)
-async def ghost_note_endpoint(request: GhostNoteRequest):
+def ghost_note_endpoint(request: GhostNoteRequest):
     """
     Search for relevant ghost notes.
-    
-    - **q**: Search query (e.g., 'Auth service error')
-    - **top_k**: Number of results to return (default: 3)
+
+    - **query**: Search query (e.g., 'Auth service error')
+    - **top_results**: Number of results to return (default: 5)
+
+    Deliberately a plain `def`, not `async def`: search_ghost_notes() is
+    synchronous and CPU-bound (embedding inference), so as a coroutine it would
+    block the event loop for the duration of every search and destroy the
+    sub-800ms latency target under any concurrency. Starlette runs plain `def`
+    handlers in a threadpool.
     """
     logger.info(f"Received search query: {request.query}")
     
@@ -90,6 +107,42 @@ async def ghost_note_endpoint(request: GhostNoteRequest):
         logger.error(f"Error in ghost-note endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+# Feedback Endpoints
+# Plain `def` for the same reason as ghost_note_endpoint above: these do
+# blocking file I/O, so Starlette should pool them rather than run them on the
+# event loop.
+@app.post("/feedback", response_model=FeedbackResponse)
+def feedback_endpoint(request: FeedbackRequest):
+    """Record a 👍/👎 on a Ghost Note.
+
+    - **chunk_id**: the `chunk_id` from the /ghost-note result being rated
+    - **query**: the query that surfaced it, so relevance can be judged in context
+    - **rating**: "up" or "down"
+    """
+    logger.info(f"Feedback {request.rating} for chunk {request.chunk_id[:12]}")
+
+    try:
+        result = record_feedback(
+            chunk_id=request.chunk_id,
+            query=request.query,
+            rating=request.rating,
+        )
+        return FeedbackResponse(**result)
+    except Exception as e:
+        logger.error(f"Error in feedback endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/feedback/summary", response_model=FeedbackResponse)
+def feedback_summary_endpoint():
+    """Aggregate 👍/👎 counts - the PRD's relevance metric."""
+    try:
+        return FeedbackResponse(recorded=True, **feedback_summary())
+    except Exception as e:
+        logger.error(f"Error in feedback summary endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
 # Root Endpoint
 @app.get("/")
 async def root():
@@ -97,9 +150,11 @@ async def root():
     return {
         "message": "Welcome to GhostKube Brain API",
         "endpoints": {
-            "health": "/health",
+            "health": "GET /health",
             "ingest": "POST /ingest",
-            "search": "GET /ghost-note"
+            "search": "POST /ghost-note",
+            "feedback": "POST /feedback",
+            "feedback_summary": "GET /feedback/summary"
         },
         "docs": "/docs"
     }

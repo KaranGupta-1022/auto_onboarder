@@ -252,3 +252,18 @@ secrets.yaml
 secrets.json
 *.pem
 *.key
+
+# --- TLS / webhook certs (regenerate with scripts/gen-certs.sh) ---
+*.crt
+*.csr
+*.srl
+extfile.cnf
+
+# --- Generated scraper output ---
+repo_content.md
+
+# --- Ghost Note feedback events (append-only JSONL) ---
+feedback.jsonl
+
+# --- Miscellaneous ---
+GhostKube_Guide.md

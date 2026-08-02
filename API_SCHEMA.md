@@ -1,9 +1,17 @@
 # GhostKube API Schema
 
-## POST /ingest
-Endpoint to ingest a GitHub repository or PR into the vector database.
+This document describes the **implemented** contract. It is the interface the Phase 11
+`kubectl-ghost` Go plugin is written against — if the code and this file ever disagree again,
+fix both in the same commit.
 
-### Request Body 
+Request and response shapes are defined in `api/models.py`.
+
+---
+
+## POST /ingest
+Ingest a GitHub repository (walked recursively) or a single document URL into the vector database.
+
+### Request Body
 ```json
 {
   "url": "https://github.com/owner/repo",
@@ -16,62 +24,69 @@ Endpoint to ingest a GitHub repository or PR into the vector database.
 ```
 
 **Parameters:**
-- `url` (string, required): GitHub repository or PR URL to scrape
-- `source_type` (string, optional): Type of source - "repo" or "pr" (default: "repo")
-- `metadata` (object, optional): Additional metadata to store with chunks
+- `url` (string, required): GitHub repository URL, or any single document URL
+- `source_type` (string, optional): Type of source — `"repo"`, `"pr"`, `"slack"` (default: `"repo"`)
+- `metadata` (object, optional): Extra flat key/values stored on every chunk. The reserved keys
+  `path`, `extension`, `is_code` and `schema` cannot be overwritten by a caller.
 
-### Response (Success - 200)
+When `url` is a GitHub repo, the API walks the repository recursively via the Contents API,
+honouring the same extension allowlist and ignore patterns as the CLI scraper, and chunks the
+result with the shared chunker in `api/chunking.py`. Chunks written by this endpoint are
+schema-compatible with those written by `embed_and_store.py`.
+
+### Response (Success — 200)
 ```json
 {
   "status": "success",
-  "chunks_ingested": 42,
-  "total_characters": 15680,
-  "message": "Successfully ingested repository"
+  "chunks_ingested": 125,
+  "total_characters": 108114,
+  "message": "Ingested 125 chunks from 35 file(s) at https://github.com/owner/repo"
 }
 ```
 
-### Response (Error - 400)
+### Response (Error — 400)
 ```json
 {
-  "error": "Invalid URL provided",
+  "error": "No indexable content found at https://...",
   "status_code": 400
 }
 ```
 
 ---
 
-## GET /ghost-note
-Endpoint to search for relevant "ghost notes" from ingested content.
+## POST /ghost-note
+Search for relevant "ghost notes" from ingested content.
 
-### Query Parameters
-- `q` (required, string): Search term or service name to find relevant notes
-- `top_k` (optional, integer, default: 3): Number of results to return
+> **Note:** this is a **POST with a JSON body**, not a GET with query parameters. Earlier
+> revisions of this document described `GET /ghost-note?q=&top_k=`; that endpoint never existed.
 
-### Example Request
+### Request Body
+```json
+{
+  "query": "auth-service",
+  "top_results": 5
+}
 ```
-GET /ghost-note?q=auth-service&top_k=5
-```
 
-### Response (Success - 200)
+**Parameters:**
+- `query` (string, required): Search term or question
+- `top_results` (integer, optional): Number of results to return (default: `5`)
+
+### Response (Success — 200)
 ```json
 {
   "query": "auth-service",
   "results": [
     {
-      "text": "The auth-api pod crashes when JWT token expires...",
-      "relevance_score": 0.87,
+      "chunk_id": "6a1f9c...e2",
+      "text": "FILE PATH: app/supabase/server.js\nEXTENSION: .js\nCODE:\n...",
+      "relevance_score": 0.4715,
       "metadata": {
-        "source_url": "https://github.com/owner/repo/pull/123",
-        "chunk_number": 5,
-        "source_type": "pr"
-      }
-    },
-    {
-      "text": "Known issue with token refresh logic in auth service...",
-      "relevance_score": 0.82,
-      "metadata": {
+        "path": "app/supabase/server.js",
+        "extension": ".js",
+        "is_code": true,
+        "schema": 2,
         "source_url": "https://github.com/owner/repo",
-        "chunk_number": 12,
         "source_type": "repo"
       }
     }
@@ -81,32 +96,115 @@ GET /ghost-note?q=auth-service&top_k=5
 
 **Response fields:**
 - `query`: The search term that was queried
-- `results`: Array of relevant chunks (max `top_k` results)
-  - `text`: The actual chunk content
-  - `relevance_score`: 0.0-1.0 score indicating how relevant this result is
-  - `metadata`: Info about the source (URL, chunk ID, source type)
+- `results`: Array of matching chunks, at most `top_results` entries
+  - `chunk_id`: `sha256` of the full chunk text — the ID it is stored under. Stable across
+    re-ingests, and the handle you pass to `POST /feedback`
+  - `text`: The chunk content, truncated to 300 characters
+  - `relevance_score`: 0.0–1.0, higher is better
+  - `metadata`: Chunk provenance — `path` is the field consumers should key on
 
-### Response (Error - 400)
+**Ranking behaviour:** results are pooled at the **file** level. A wide pool of candidate chunks
+is retrieved, grouped by `metadata.path`, and only each file's single best-scoring chunk is
+returned — so one large file cannot occupy several of the top slots.
+
+By default `relevance_score` is derived from vector distance as `1 / (1 + distance)`.
+Cross-encoder reranking is **disabled by default** (`RERANK_ENABLED=false`) because it measured
+*worse* than plain vector search on this domain — hit@1 fell from 100% to 83% on one repo and
+from 70% to 60% on another. Enabling it changes how `relevance_score` is computed but not the
+response shape.
+
+### Response (Error — 422)
+A missing or malformed `query` is rejected by FastAPI's request validation with a 422.
+
+---
+
+## POST /feedback
+Record a 👍/👎 on a Ghost Note. This is what makes the PRD's relevance-score metric measurable;
+Phase 11 (terminal) and Phase 12 (Console) are both consumers.
+
+### Request Body
 ```json
 {
-  "error": "Missing required query parameter: q",
-  "status_code": 400
+  "chunk_id": "6a1f9c...e2",
+  "query": "how does supabase authentication work",
+  "rating": "up"
 }
 ```
+
+**Parameters:**
+- `chunk_id` (string, required): the `chunk_id` from the `/ghost-note` result being rated
+- `query` (string, required): the query that surfaced it, so relevance can be judged in context
+- `rating` (string, required): `"up"` or `"down"` — anything else is rejected with a 422
+
+### Response (Success — 200)
+```json
+{
+  "recorded": true,
+  "total_up": 1,
+  "total_down": 0
+}
+```
+
+Events are appended one JSON object per line to `FEEDBACK_PATH` (default `./feedback.jsonl`,
+gitignored). Each line carries `chunk_id`, `query`, `rating` and a UTC `recorded_at`. This is
+deliberately **not** a Chroma collection — it is append-only event data, and writing it into the
+vector store would put non-repository records in the retrieval path.
+
+`recorded` is `false` if the append failed (e.g. a read-only filesystem); the request still
+returns 200 with the current totals rather than erroring.
+
+---
+
+## GET /feedback/summary
+Aggregate feedback counts.
+
+### Response (Success — 200)
+```json
+{
+  "recorded": true,
+  "total_up": 12,
+  "total_down": 3
+}
+```
+
+`recorded` is always `true` here — the field is shared with `POST /feedback`, where it is
+meaningful.
 
 ---
 
 ## GET /health
-Health check endpoint to verify API and database connectivity.
+Health check. Actually queries ChromaDB, so it can fail — Phase 9's readiness probe depends on that.
 
-### Response (Success - 200)
+### Response (Healthy — 200)
 ```json
 {
+  "service": "GhostKube Brain API",
+  "version": "1.0.0",
   "status": "ok",
-  "chroma_connected": true
+  "chroma_connected": true,
+  "chunk_count": 125
+}
+```
+
+### Response (Vector store unreachable — 200)
+```json
+{
+  "service": "GhostKube Brain API",
+  "version": "1.0.0",
+  "status": "error",
+  "chroma_connected": false,
+  "chunk_count": 0
 }
 ```
 
 **Response fields:**
-- `status`: "ok" if healthy, "error" otherwise
-- `chroma_connected`: true if ChromaDB is accessible, false otherwise
+- `status`: `"ok"` if ChromaDB responded, `"error"` otherwise
+- `chroma_connected`: whether the collection could be queried
+- `chunk_count`: number of chunks currently indexed (`0` when disconnected)
+
+> Returns HTTP 200 in both cases; probes should key on the `status` / `chroma_connected` fields.
+
+---
+
+## GET /
+Endpoint index plus a link to the auto-generated Swagger docs at `/docs`.

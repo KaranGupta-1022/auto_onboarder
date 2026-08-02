@@ -1,42 +1,28 @@
-version: '3.8'
-
 services:
-  chroma:
-    image: ghcr.io/chroma-core/chroma:latest
-    container_name: auto_onboarder-chroma
-    ports:
-      - "8001:8000"
-    environment:
-      - IS_PERSISTENT=TRUE
-      - PERSIST_DIRECTORY=/chroma_data
-    volumes:
-      - chroma_data:/chroma_data
-    networks:
-      - auto_onboarder-network
-
   api:
-    build: .
+    build:
+      context: ..
+      dockerfile: api/Dockerfile
     container_name: auto_onboarder-api
     ports:
       - "8000:8000"
     environment:
-      # Use the service name 'chroma' to communicate over the network
-      - CHROMA_HOST=chroma
-      - CHROMA_PORT=8000
+      # ChromaDB runs in-process via PersistentClient. The repo bind mount below
+      # already provides ./chroma_db at this path, so the index is shared with
+      # the CLI pipeline (embed_and_store.py) rather than living in a separate copy.
+      - CHROMA_PATH=/app/chroma_db
       - CHROMA_COLLECTION_NAME=repo_docs
-      - EMBED_MODEL_NAME=all-MiniLM-L6-v2
-    depends_on:
-      - chroma
+      - EMBED_MODEL_NAME=all-MiniLM-L12-v2
     volumes:
-      - ./:/app
+      # A named volume was mounted at /app/chroma_db here. It broke the container
+      # two ways: Docker creates named volumes root-owned, so the non-root
+      # appuser (uid 1000) got "unable to open database file" from Chroma, and it
+      # shadowed the real chroma_db that this bind mount already supplies.
+      - ../:/app
     networks:
       - auto_onboarder-network
     # Use array form for CMD/Command to handle signals correctly
-    command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-
-volumes:
-  chroma_data:
-    driver: local
+    command: ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 networks:
   auto_onboarder-network:

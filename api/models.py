@@ -1,6 +1,6 @@
 # api/models.py
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from typing import List, Literal, Optional, Dict, Any
 
 # Ingest Endpoint Request
 class IngestRequest(BaseModel):
@@ -21,15 +21,30 @@ class GhostNoteRequest(BaseModel):
     top_results: int = 5
     
 class GhostNoteResult(BaseModel):
+    # sha256 of the full chunk text - the same ID the chunk is stored under.
+    # Stable across re-ingests, so feedback survives reindexing.
+    chunk_id: str
     text: str
     relevance_score: float
     metadata: Dict[str, Any]
-    
+
 class GhostNoteResponse(BaseModel):
     query: str
     results: List[GhostNoteResult]
-    
-# Error Response 
+
+# Feedback Endpoint
+
+class FeedbackRequest(BaseModel):
+    chunk_id: str
+    query: str
+    rating: Literal["up", "down"]
+
+class FeedbackResponse(BaseModel):
+    recorded: bool
+    total_up: int
+    total_down: int
+
+# Error Response
     
 class ErrorResponse(BaseModel):
     error: str
