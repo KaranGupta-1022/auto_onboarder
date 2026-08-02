@@ -23,14 +23,85 @@ MIN_BODY_CHARS = 40
 
 CHUNK_SIZE = 1000
 
-IGNORE_LIST = ["package-lock.json", "yarn.lock", "node_modules", ".next", "dist", "bin"]
+
+# What is worth indexing at all. The complement of the ignore rules below: this
+# is the allowlist ("is this a kind of file we index?"), those are the denylist
+# ("is this a copy of one we shouldn't?"). Both are applied at fetch time by the
+# scraper and again at chunk time, so they belong together.
+ALLOWED_EXTENSIONS = (
+    '.md', '.py', '.js', '.ts', '.json', '.yaml', '.yml', '.txt', '.jsx', '.tsx',
+)
+
+# Ignore rules are split by HOW they match, not just what they match. The old
+# list was a flat substring test, which silently dropped legitimate source: a
+# bare "dist" entry matches distance.py and distribution.js, and "bin" matches
+# combine.ts, binary_search.py and cabinet.py. Any entry short enough to be
+# useful as a directory name is also short enough to appear inside real
+# filenames, so matching has to be structural.
+
+# Matched against the exact filename.
+IGNORE_FILENAMES = {
+    # Lockfiles - huge, machine-generated, and pure noise once embedded.
+    "package-lock.json", "npm-shrinkwrap.json", "yarn.lock", "pnpm-lock.yaml",
+    "bun.lockb", "poetry.lock", "pipfile.lock", "composer.lock",
+    "gemfile.lock", "cargo.lock", "go.sum", "gradle.lockfile",
+    # Editor/OS debris that occasionally gets committed.
+    ".ds_store", "thumbs.db",
+}
+
+# Matched against whole path SEGMENTS, so "dist" hits dist/bundle.js but not
+# src/distance.py.
+IGNORE_DIRS = {
+    # Vendored dependencies
+    "node_modules", "bower_components", "vendor", "third_party", "thirdparty",
+    "site-packages", "venv", ".venv", "virtualenv",
+    # Build output
+    "dist", "build", "out", "target", "bin", "obj", "_build",
+    ".next", ".nuxt", ".output", ".svelte-kit", ".astro", "_site",
+    ".docusaurus", ".vitepress",
+    # Caches and tool state
+    "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", ".tox",
+    ".cache", ".parcel-cache", ".turbo", ".gradle", ".eggs", ".nox",
+    # Coverage and snapshots
+    "coverage", "htmlcov", "__snapshots__",
+    # VCS and editor metadata
+    ".git", ".hg", ".svn", ".idea", ".vscode",
+}
+
+# Matched against the end of the filename.
+IGNORE_SUFFIXES = (
+    # Minified and bundled assets - unreadable, and they blow the chunk budget.
+    ".min.js", ".min.css", ".bundle.js", ".chunk.js", ".map",
+    # Generated code: the source of truth is the .proto/.graphql, not this.
+    "_pb2.py", "_pb2_grpc.py", ".pb.go", ".pb.cc", ".pb.h", ".g.dart",
+    ".freezed.dart", ".generated.ts", ".generated.js", "_generated.go",
+)
 
 FILE_HEADER = "## File Path: "
 
 
 def is_ignored(full_path: str) -> bool:
-    lowered = full_path.lower()
-    return any(trash in lowered for trash in IGNORE_LIST)
+    """Structural ignore test - exact filename, path segment, or suffix.
+
+    Deliberately not a substring match: see the note above IGNORE_FILENAMES.
+    """
+    lowered = full_path.lower().replace("\\", "/")
+    segments = [s for s in lowered.split("/") if s]
+    if not segments:
+        return False
+
+    filename = segments[-1]
+    if filename in IGNORE_FILENAMES:
+        return True
+    if filename.endswith(IGNORE_SUFFIXES):
+        return True
+
+    # Directory components only, so a file that happens to be named "build"
+    # is still indexed while build/ contents are not.
+    for segment in segments[:-1]:
+        if segment in IGNORE_DIRS or segment.endswith(".egg-info"):
+            return True
+    return False
 
 
 def chunk_file(full_path: str, block: str):

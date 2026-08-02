@@ -9,7 +9,9 @@ import chromadb
 import requests
 from sentence_transformers import SentenceTransformer
 
-from .chunking import FILE_HEADER, SCHEMA_VERSION, chunk_repo_document
+from .chunking import (
+    ALLOWED_EXTENSIONS, FILE_HEADER, SCHEMA_VERSION, chunk_repo_document, is_ignored,
+)
 from .config import Config
 
 logger = logging.getLogger(__name__)
@@ -99,10 +101,10 @@ async def _fetch_repo_document(owner: str, repo: str) -> str:
         subdirs = []
         for item in items:
             full_path = item['path']
-            if scrape_repo.is_ignored(full_path):
+            if is_ignored(full_path):
                 continue
             if item['type'] == 'file':
-                if item['name'].endswith(scrape_repo.ALLOWED_EXTENSIONS):
+                if item['name'].endswith(ALLOWED_EXTENSIONS):
                     files.append((item['download_url'], full_path))
             elif item['type'] == 'dir':
                 subdirs.append(full_path)
