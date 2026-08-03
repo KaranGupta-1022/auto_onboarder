@@ -150,6 +150,10 @@ def _store(chunks, metadatas, extra_metadata: dict | None):
             for key, value in extra_metadata.items():
                 # Chroma only accepts flat scalars, and the reserved keys below
                 # are what search depends on - never let a caller overwrite them.
+                # "service" is the notable non-reserved key: pass
+                # IngestRequest.metadata={"service": "auth-service"} at ingest
+                # time and search_ghost_notes() can later scope a query to it
+                # via GhostNoteRequest.ghost_note_id="svc:auth-service".
                 if key in ("path", "extension", "is_code", "schema"):
                     continue
                 if isinstance(value, (str, int, float, bool)):
@@ -234,12 +238,27 @@ async def ingest_url(url: str, source_type: str = "repo", metadata: dict | None 
         }
 
 
-def search_ghost_notes(query: str, top_results: int = 5) -> dict:
+def search_ghost_notes(query: str, top_results: int = 5, ghost_note_id: str | None = None) -> dict:
+    """Search for relevant chunks, optionally scoped to a webhook-resolved note ID.
+
+    `ghost_note_id` is the raw GHOST_NOTE_ID env var the webhook injected,
+    e.g. "svc:auth-service". Only the "svc:" form is understood: the suffix
+    is used as a `where={"service": ...}` filter against chunk metadata, so
+    a pod labeled ghostkube.io/service=auth-service only sees notes ingested
+    with metadata={"service": "auth-service"} (see ingest_url's `metadata`
+    param). Any other prefix, or no match at all, falls back to an
+    unfiltered search rather than failing the request - a stale or
+    unrecognized note ID should degrade to "search everything," not 500.
+    """
     try:
         logger.info("Searching for query: %s", query)
 
         if collection.count() == 0:
             return {"query": query, "results": []}
+
+        service = None
+        if ghost_note_id and ghost_note_id.startswith("svc:"):
+            service = ghost_note_id[len("svc:"):] or None
 
         query_embedding = embedding_model.encode(query).tolist()
 
@@ -249,7 +268,19 @@ def search_ghost_notes(query: str, top_results: int = 5) -> dict:
             query_embeddings=[query_embedding],
             n_results=Config.RETRIEVAL_POOL_SIZE,
             include=['documents', 'metadatas', 'distances'],
+            where={"service": service} if service else None,
         )
+
+        if service and not (search_results["documents"] and search_results["documents"][0]):
+            logger.warning(
+                "No chunks matched service=%r for ghost_note_id=%r; falling back to unfiltered search",
+                service, ghost_note_id,
+            )
+            search_results = collection.query(
+                query_embeddings=[query_embedding],
+                n_results=Config.RETRIEVAL_POOL_SIZE,
+                include=['documents', 'metadatas', 'distances'],
+            )
 
         if not (search_results["documents"] and search_results["documents"][0]):
             return {"query": query, "results": []}

@@ -28,9 +28,78 @@ kubectl describe pod $(kubectl get pods -l ghostkube.io/service=auth-service -o 
 5 . Check environment variables inside the pod (most containers use sh)
 $POD = kubectl get pods -l ghostkube.io/service=auth-service -o jsonpath='{.items[0].metadata.name}'
 kubectl exec -it $POD -- sh -c "printenv | grep GHOST_NOTE_ID || echo 'GHOST_NOTE_ID not set'"
-(Optional) If you built any local images and need to load into kind (Won't work b/c we have no webhook)
-docker build -t my-webhook:dev ./path/to/webhook
-kind load docker-image my-webhook:dev --name ghostkube
+## Mutating admission webhook (Phase 8)
+
+The webhook injects `GHOST_NOTE_ID` into any pod carrying the
+`ghostkube.io/service` label. End-to-end from a fresh cluster:
+
+```bash
+# 1. Generate the CA + server cert/key (SAN: ghostkube-webhook-svc.ghostkube.svc)
+bash scripts/gen-certs.sh
+
+# 2. Create the ghostkube namespace, then the TLS secret from the generated cert
+kubectl apply -f k8s/webhook-deployment.yaml
+kubectl create secret tls webhook-server-tls \
+  --cert=server.crt --key=server.key -n ghostkube
+
+# 3. Apply the MutatingWebhookConfiguration with the real CA bundle
+#    (k8s/mutatingwebhook.yaml keeps PLACEHOLDER_CA_BUNDLE_BASE64 in-tree;
+#    the real value is patched in at apply time so no env-specific cert
+#    material gets committed)
+CA_BUNDLE=$(base64 -w0 ca.crt)
+sed "s|PLACEHOLDER_CA_BUNDLE_BASE64|${CA_BUNDLE}|" k8s/mutatingwebhook.yaml | kubectl apply -f -
+
+# 4. Build the webhook image and side-load it into kind
+docker build -t ghostkube/webhook:dev ./webhook
+kind load docker-image ghostkube/webhook:dev --name ghostkube
+kubectl -n ghostkube rollout restart deployment/ghostkube-webhook
+kubectl -n ghostkube rollout status deployment/ghostkube-webhook
+
+# 5. Verify: apply the test fixtures and check the injected env var
+kubectl apply -f k8s/test-workload.yaml
+kubectl exec deploy/hello-auth -- printenv GHOST_NOTE_ID   # -> svc:auth-service
+kubectl exec pod/hello-nolabel -- printenv GHOST_NOTE_ID   # -> unset, exit 1
+```
+
+`GHOST_NOTE_ID` carries a `svc:` prefix (Phase 8 v2) so it's an explicit join
+key rather than a bare label value: `POST /ghost-note` accepts it as
+`ghost_note_id` and scopes results to chunks ingested with matching
+`metadata.service`, falling back to an unfiltered search if nothing matches.
+
+If the positive case doesn't come back with `svc:auth-service`, check
+`kubectl -n ghostkube logs deploy/ghostkube-webhook` — it logs the admission
+`uid` and patch count on every request, which is the fastest way to tell
+whether the API server ever called the webhook at all.
+
+### Shadow Sidecar (PRD 4B)
+
+The webhook also appends a `ghostkube-shadow` container to every labeled pod.
+It's demo-minimal, not a full observability agent: every 30s it prints one
+JSON heartbeat (`{ghost_note_id, pod, namespace, status, ts}`) to stdout, and
+optionally POSTs the same tick to the Brain API if `BRAIN_URL` is set on the
+container (default is `LOG_ONLY=1`, stdout only). It's skipped if a container
+named `ghostkube-shadow` is already present.
+
+```bash
+# Build and load alongside the webhook image (see step 4 above)
+docker build -t ghostkube/sidecar:dev ./sidecar
+kind load docker-image ghostkube/sidecar:dev --name ghostkube
+kubectl -n ghostkube rollout restart deployment/ghostkube-webhook
+kubectl apply -f k8s/test-workload.yaml   # recreate hello-auth so it picks up the sidecar
+
+# Verify: hello-auth has 2 containers, hello-nolabel still has 1
+kubectl get pod -l app=hello-auth -o jsonpath='{.items[0].spec.containers[*].name}'
+kubectl get pod hello-nolabel -o jsonpath='{.spec.containers[*].name}'
+
+# Verify: the sidecar is ticking
+POD=$(kubectl get pod -l app=hello-auth -o jsonpath='{.items[0].metadata.name}')
+kubectl logs "$POD" -c ghostkube-shadow
+```
+
+If a Brain API is running and reachable, `POST /pod-state` accepts each tick
+and appends it as JSONL (`Config.POD_STATE_PATH`, same append-only pattern as
+`/feedback`) — pod liveness/state, never written to Chroma.
+
 When finished, delete the cluster
 kind delete cluster --name ghostkube
 

@@ -3,13 +3,16 @@
 #   kubectl apply -f k8s/test-workload.yaml
 #
 # Positive case: hello-auth carries ghostkube.io/service, so the mutating
-# webhook must inject GHOST_NOTE_ID=auth-service into its container.
+# webhook must inject GHOST_NOTE_ID=svc:auth-service into its container. The
+# "svc:" prefix (added in the Phase 8 v2 upgrade) makes the value an explicit
+# join key the Brain API can resolve against chunk metadata.service, rather
+# than a bare label value.
 # Negative case: hello-nolabel carries no label, so it must come out untouched.
 # Both together are what make "the webhook mutates everything" and "the webhook
 # mutates the right things" distinguishable.
 #
 # Verify:
-#   kubectl exec deploy/hello-auth -- printenv GHOST_NOTE_ID   # -> auth-service
+#   kubectl exec deploy/hello-auth -- printenv GHOST_NOTE_ID   # -> svc:auth-service
 #   kubectl exec pod/hello-nolabel -- printenv GHOST_NOTE_ID   # -> non-zero exit
 ---
 apiVersion: apps/v1

@@ -35,6 +35,11 @@ class Config:
     # into the vector store would pollute retrieval with records that are not
     # repository content.
     FEEDBACK_PATH = os.getenv("FEEDBACK_PATH", "./feedback.jsonl")
-    
+
+    # Shadow Sidecar heartbeats (PRD 4B) land here as JSONL, same append-only
+    # pattern as feedback. Pod liveness/state, not retrieval content - never
+    # written to Chroma.
+    POD_STATE_PATH = os.getenv("POD_STATE_PATH", "./pod_state.jsonl")
+
 config = Config()
     

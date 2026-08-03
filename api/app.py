@@ -8,7 +8,7 @@ import asyncio
 from .config import config
 from .models import (
     IngestRequest, IngestResponse, GhostNoteRequest, GhostNoteResponse,
-    FeedbackRequest, FeedbackResponse, ErrorResponse,
+    FeedbackRequest, FeedbackResponse, PodStateRequest, PodStateResponse, ErrorResponse,
 )
 from .pipeline import (
     ingest_url, search_ghost_notes, health_snapshot,
@@ -90,6 +90,8 @@ def ghost_note_endpoint(request: GhostNoteRequest):
 
     - **query**: Search query (e.g., 'Auth service error')
     - **top_results**: Number of results to return (default: 5)
+    - **ghost_note_id**: Optional webhook-injected GHOST_NOTE_ID, e.g. "svc:auth-service",
+      to scope results to chunks ingested with matching metadata.service
 
     Deliberately a plain `def`, not `async def`: search_ghost_notes() is
     synchronous and CPU-bound (embedding inference), so as a coroutine it would
@@ -100,7 +102,11 @@ def ghost_note_endpoint(request: GhostNoteRequest):
     logger.info(f"Received search query: {request.query}")
     
     try:
-        result = search_ghost_notes(query=request.query, top_results=request.top_results)
+        result = search_ghost_notes(
+            query=request.query,
+            top_results=request.top_results,
+            ghost_note_id=request.ghost_note_id,
+        )
         return GhostNoteResponse(**result)
     
     except Exception as e:
@@ -143,6 +149,26 @@ def feedback_summary_endpoint():
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
+# Pod State Endpoint (Shadow Sidecar, PRD 4B)
+# Best-effort heartbeat store for the sidecar the mutating webhook injects
+# into labeled pods. Appended as JSONL, same pattern as /feedback: event
+# data, not retrieval content, so it deliberately never touches Chroma.
+@app.post("/pod-state", response_model=PodStateResponse)
+def pod_state_endpoint(request: PodStateRequest):
+    logger.info(
+        f"Pod state tick: pod={request.pod} namespace={request.namespace} "
+        f"ghost_note_id={request.ghost_note_id} status={request.status}"
+    )
+
+    try:
+        with open(config.POD_STATE_PATH, "a", encoding="utf-8") as f:
+            f.write(request.model_dump_json() + "\n")
+        return PodStateResponse(recorded=True)
+    except OSError as e:
+        logger.error(f"Could not write pod state: {str(e)}")
+        return PodStateResponse(recorded=False)
+
+
 # Root Endpoint
 @app.get("/")
 async def root():
@@ -154,7 +180,8 @@ async def root():
             "ingest": "POST /ingest",
             "search": "POST /ghost-note",
             "feedback": "POST /feedback",
-            "feedback_summary": "GET /feedback/summary"
+            "feedback_summary": "GET /feedback/summary",
+            "pod_state": "POST /pod-state"
         },
         "docs": "/docs"
     }

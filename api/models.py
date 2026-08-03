@@ -19,6 +19,9 @@ class IngestResponse(BaseModel):
 class GhostNoteRequest(BaseModel):
     query: str
     top_results: int = 5
+    # From the webhook-injected GHOST_NOTE_ID env var, e.g. "svc:auth-service".
+    # Only the "svc:" form is understood today; anything else is ignored.
+    ghost_note_id: Optional[str] = None
     
 class GhostNoteResult(BaseModel):
     # sha256 of the full chunk text - the same ID the chunk is stored under.
@@ -43,6 +46,18 @@ class FeedbackResponse(BaseModel):
     recorded: bool
     total_up: int
     total_down: int
+
+# Pod State Endpoint (Shadow Sidecar, PRD 4B)
+
+class PodStateRequest(BaseModel):
+    ghost_note_id: Optional[str] = None
+    pod: str
+    namespace: str
+    status: str
+    ts: str
+
+class PodStateResponse(BaseModel):
+    recorded: bool
 
 # Error Response
     
