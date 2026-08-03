@@ -41,5 +41,11 @@ class Config:
     # written to Chroma.
     POD_STATE_PATH = os.getenv("POD_STATE_PATH", "./pod_state.jsonl")
 
+    # Phase 8.5 PR ingestion: closed-and-merged PRs older than this are not
+    # walked. All PRs is too much for a rate-limited walk on an active repo,
+    # so this is a deliberate knob rather than a hardcoded constant - see
+    # api/pr_ingest.py::list_merged_prs and api/README.md.
+    PR_LOOKBACK_MONTHS = int(os.getenv("PR_LOOKBACK_MONTHS", 6))
+
 config = Config()
     

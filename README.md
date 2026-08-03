@@ -103,6 +103,15 @@ and appends it as JSONL (`Config.POD_STATE_PATH`, same append-only pattern as
 When finished, delete the cluster
 kind delete cluster --name ghostkube
 
+## PR & issue ingestion (Phase 8.5)
+
+`POST /ingest {"url": "https://github.com/<owner>/<repo>", "source_type": "pr"}` indexes the
+*why*, not just the code: closed-and-merged PRs from the last `PR_LOOKBACK_MONTHS` months
+(default 6), each with its title/body, review comments, and discussion comments, chunked to a
+synthetic `pull/{n}` path with `metadata.source_type == "pr"`. See
+[`api/README.md`](api/README.md#pr--issue-ingestion-phase-85) for the full contract and
+`eval/queries_pr_tribal.json` for tribal-knowledge eval queries.
+
 ## Completed Work - Phase 1 & Phase 2
 
 ### ✅ Phase 1: Planning & Setup

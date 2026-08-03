@@ -1,0 +1,23 @@
+[
+  {
+    "_comment": "Phase 8.5 tribal-knowledge set. Seeded from a real smoke ingest (see GhostKube_Guide.md Phase 8.5) of kubernetes-sigs/kind via POST /ingest {\"url\": \"https://github.com/kubernetes-sigs/kind\", \"source_type\": \"pr\"}, sampled to the 3 most recently merged PRs (#4214, #4226, #4192) within the default 6-month PR_LOOKBACK_MONTHS window - not the full PR history. These are exactly the queries a code-only index cannot answer: the 'why', not the 'what'. Run against a Chroma index that has actually ingested these PRs (a fresh chroma_db has none of this) - queries_f1.json/queries_meetme.json remain the code-retrieval sets and are untouched by this phase.",
+    "query": null,
+    "expected_path": null
+  },
+  {
+    "query": "why did docker client proxy settings stop working on docker nodes",
+    "expected_path": "pull/4192"
+  },
+  {
+    "query": "known issues with kind behind a corporate proxy",
+    "expected_path": "pull/4192"
+  },
+  {
+    "query": "how do I install kind on Arch Linux",
+    "expected_path": "pull/4214"
+  },
+  {
+    "query": "why was actions/checkout bumped in the CI workflow",
+    "expected_path": "pull/4226"
+  }
+]

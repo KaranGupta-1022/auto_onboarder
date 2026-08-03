@@ -9,6 +9,7 @@ import chromadb
 import requests
 from sentence_transformers import SentenceTransformer
 
+from . import pr_ingest
 from .chunking import (
     ALLOWED_EXTENSIONS, FILE_HEADER, SCHEMA_VERSION, chunk_repo_document, is_ignored,
 )
@@ -181,16 +182,34 @@ def _store(chunks, metadatas, extra_metadata: dict | None):
 
 
 async def ingest_url(url: str, source_type: str = "repo", metadata: dict | None = None) -> dict:
-    """Ingest a GitHub repository (recursively) or a single document URL.
+    """Ingest a GitHub repository (recursively), its PR/issue history, or a
+    single document URL.
 
     Produces the exact same chunk text and metadata schema as the CLI pipeline,
     so both write compatible records into one collection.
+
+    POST /ingest {"url": "<repo>", "source_type": "pr"} routes to
+    pr_ingest.build_pr_document() instead of the file walk: closed-and-merged
+    PRs from the last Config.PR_LOOKBACK_MONTHS months, chunked through the
+    same chunk_repo_document() via the synthetic `pull/{n}` path.
     """
     try:
-        logger.info("Starting ingestion for URL: %s", url)
+        logger.info("Starting ingestion for URL: %s (source_type=%s)", url, source_type)
 
         parts = _github_repo_parts(url)
-        if parts:
+        pr_metadata_by_path: dict = {}
+
+        if source_type == "pr":
+            if not parts:
+                return {
+                    "status": "error",
+                    "chunks_ingested": 0,
+                    "total_characters": 0,
+                    "message": f"source_type='pr' requires a GitHub repo URL, got: {url}",
+                }
+            owner, repo = parts
+            document, pr_metadata_by_path = await pr_ingest.build_pr_document(owner, repo)
+        elif parts:
             owner, repo = parts
             document = await _fetch_repo_document(owner, repo)
         else:
@@ -216,6 +235,9 @@ async def ingest_url(url: str, source_type: str = "repo", metadata: dict | None 
         for meta in metadatas:
             meta["source_url"] = url
             meta["source_type"] = source_type
+            pr_meta = pr_metadata_by_path.get(meta["path"])
+            if pr_meta:
+                meta.update(pr_meta)
 
         stored = _store(chunks, metadatas, metadata)
         files_seen = len({m["path"] for m in metadatas})
@@ -225,7 +247,7 @@ async def ingest_url(url: str, source_type: str = "repo", metadata: dict | None 
             "status": "success",
             "chunks_ingested": stored,
             "total_characters": len(document),
-            "message": f"Ingested {stored} chunks from {files_seen} file(s) at {url}",
+            "message": f"Ingested {stored} chunks from {files_seen} file(s)/PR(s) at {url}",
         }
 
     except Exception as e:
