@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ghostkube-api
+  namespace: ghostkube
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ghostkube-api
+  template:
+    metadata:
+      labels:
+        app: ghostkube-api
+    spec:
+      containers:
+        - name: api
+          image: ghostkube/api:dev   # build+load to kind or push to registry
+          imagePullPolicy: IfNotPresent  # use the image side-loaded via `kind load`
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: ghostkube-api-config
+            - secretRef:
+                name: ghostkube-api-secrets
+          env:
+            # In-cluster Chroma: talk to the ghostkube-chroma StatefulSet over
+            # HTTP instead of the local PersistentClient path (api/config.py).
+            - name: CHROMA_HOST
+              value: ghostkube-chroma-svc
+            - name: CHROMA_PORT
+              value: "8000"
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "500m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            # The embedding + reranker models load at import time, so the
+            # first successful response can take a while - generous delays
+            # so the probe doesn't kill a pod that's still starting up.
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ghostkube-api-svc
+  namespace: ghostkube
+spec:
+  selector:
+    app: ghostkube-api
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP

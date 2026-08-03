@@ -10,6 +10,11 @@ def _flag(name: str, default: bool = False) -> bool:
 
 class Config:
     CHROMA_PATH = os.getenv("CHROMA_PATH", "./chroma_db")
+    # In-cluster (Phase 9): CHROMA_HOST points at the ghostkube-chroma StatefulSet
+    # and pipeline.py uses HttpClient. Local/compose: CHROMA_HOST is unset and
+    # pipeline.py falls back to PersistentClient(path=CHROMA_PATH) as before.
+    CHROMA_HOST = os.getenv("CHROMA_HOST", "")
+    CHROMA_PORT = int(os.getenv("CHROMA_PORT", "8000"))
     EMBED_MODEL_NAME = os.getenv("EMBED_MODEL_NAME", "all-MiniLM-L12-v2")
     CHROMA_COLLECTION_NAME = os.getenv("CHROMA_COLLECTION_NAME", "repo_docs")
     LOG_LEVEL  =os.getenv("LOG_LEVEL", "INFO")

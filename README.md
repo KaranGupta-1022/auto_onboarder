@@ -112,6 +112,51 @@ synthetic `pull/{n}` path with `metadata.source_type == "pr"`. See
 [`api/README.md`](api/README.md#pr--issue-ingestion-phase-85) for the full contract and
 `eval/queries_pr_tribal.json` for tribal-knowledge eval queries.
 
+## Deploy the Brain API into the cluster (Phase 9)
+
+The Brain API and a standalone ChromaDB run as their own workloads in the `ghostkube`
+namespace, alongside the Phase 8 webhook. In-cluster, the API talks to Chroma over HTTP
+(`CHROMA_HOST=ghostkube-chroma-svc`) instead of the local `PersistentClient` path used by
+`docker compose` — see [`api/README.md`](api/README.md#environment-variables).
+
+```bash
+# 1. Build the API image (from the repo root, so `api/` is importable as a package)
+#    and pull ChromaDB, then side-load both into kind
+docker build -f api/Dockerfile -t ghostkube/api:dev .
+kind load docker-image ghostkube/api:dev --name ghostkube
+docker pull chromadb/chroma:1.5.9
+kind load docker-image chromadb/chroma:1.5.9 --name ghostkube
+
+# 2. Apply the whole stack in one shot (webhook + mutating webhook config +
+#    Chroma StatefulSet + Brain API). The MWC's caBundle still needs the
+#    Phase 8 sed pipe if you're applying to a fresh cluster - see above.
+kubectl apply -k k8s/
+
+# 3. Wait for the API to come up, then verify /health from inside the cluster
+kubectl -n ghostkube rollout status deployment/ghostkube-api
+kubectl run -it --rm curl --image=curlimages/curl --restart=Never -- \
+  curl -s http://ghostkube-api-svc.ghostkube.svc:8000/health
+```
+
+Expect `{"status":"ok","chroma_connected":true,...}`. `GITHUB_TOKEN` in
+`k8s/api-config.yaml` ships as an empty placeholder (fine for `/health`, which never calls
+GitHub) — set a real one after apply if you need `/ingest` against a repo:
+
+```bash
+kubectl create secret generic ghostkube-api-secrets \
+  --from-literal=GITHUB_TOKEN=<token> -n ghostkube \
+  --dry-run=client -o yaml | kubectl apply -f -
+```
+
+If `kind load docker-image` fails with a `content digest ... not found` error, it's a known
+issue with Docker Desktop's containerd image store retaining multi-platform/attestation
+manifest entries that `docker save` can't fully export. The kind node has direct internet
+access, so pulling straight into its containerd store sidesteps it:
+
+```bash
+docker exec ghostkube-control-plane ctr --namespace=k8s.io images pull docker.io/chromadb/chroma:1.5.9
+```
+
 ## Completed Work - Phase 1 & Phase 2
 
 ### ✅ Phase 1: Planning & Setup

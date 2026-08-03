@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ghostkube-api-config
+  namespace: ghostkube
+data:
+  EMBED_MODEL_NAME: "all-MiniLM-L12-v2"
+  CHROMA_COLLECTION_NAME: "repo_docs"
+  LOG_LEVEL: "INFO"
+  PR_LOOKBACK_MONTHS: "6"
+---
+# Placeholder only - an empty GITHUB_TOKEN is fine for /health, which never
+# calls GitHub. Real ingestion needs a real token. Never commit one here;
+# set it after apply with either of:
+#
+#   kubectl create secret generic ghostkube-api-secrets \
+#     --from-literal=GITHUB_TOKEN=<token> -n ghostkube --dry-run=client -o yaml | kubectl apply -f -
+#
+#   kubectl patch secret ghostkube-api-secrets -n ghostkube \
+#     -p '{"stringData":{"GITHUB_TOKEN":"<token>"}}'
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ghostkube-api-secrets
+  namespace: ghostkube
+type: Opaque
+stringData:
+  GITHUB_TOKEN: ""

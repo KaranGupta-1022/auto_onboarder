@@ -42,15 +42,20 @@ or via the environment.
 
 | Variable                 | Default              | Purpose                               |
 | ------------------------ | -------------------- | ------------------------------------- |
-| `CHROMA_PATH`            | `./chroma_db`        | On-disk location of the vector store  |
+| `CHROMA_PATH`            | `./chroma_db`        | On-disk location of the vector store (used only when `CHROMA_HOST` is unset) |
+| `CHROMA_HOST`            | *(empty)*            | Chroma server host — set in-cluster to talk `HttpClient` to the `ghostkube-chroma` StatefulSet instead of a local `PersistentClient` |
+| `CHROMA_PORT`            | `8000`               | Chroma server port, used only when `CHROMA_HOST` is set |
 | `CHROMA_COLLECTION_NAME` | `repo_docs`          | Chroma collection name                |
 | `EMBED_MODEL_NAME`       | `all-MiniLM-L12-v2`  | sentence-transformers embedding model |
 | `API_PORT`               | `8000`               | Port uvicorn binds                    |
 | `LOG_LEVEL`              | `INFO`               | Logging verbosity                     |
 | `PR_LOOKBACK_MONTHS`     | `6`                  | PR ingestion scope - see below        |
 
-ChromaDB runs in-process via `PersistentClient` — there is no separate Chroma container to
-point at, so there are no `CHROMA_HOST` / `CHROMA_PORT` settings.
+Locally and in Compose, `CHROMA_HOST` is unset and ChromaDB runs in-process via
+`PersistentClient` against `CHROMA_PATH`. In the cluster (Phase 9), `k8s/api-deployment.yaml`
+sets `CHROMA_HOST=ghostkube-chroma-svc` / `CHROMA_PORT=8000` and `api/pipeline.py` switches to
+`HttpClient`, talking to the `ghostkube-chroma` StatefulSet over HTTP — see
+`k8s/chroma-statefulset.yaml`.
 
 ## Endpoints
 

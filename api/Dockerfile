@@ -44,6 +44,10 @@ USER appuser
 # appuser's own cache, which is the user that needs it at runtime.
 RUN python -m playwright install chromium
 
+# Bake the embedding model weights into the image so a cold pod never needs
+# egress to Hugging Face on startup (see api/config.py EMBED_MODEL_NAME).
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L12-v2')"
+
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \

@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ghostkube-chroma
+  namespace: ghostkube
+spec:
+  serviceName: ghostkube-chroma-svc
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ghostkube-chroma
+  template:
+    metadata:
+      labels:
+        app: ghostkube-chroma
+    spec:
+      containers:
+        - name: chroma
+          # Pinned to match the chromadb Python client version in
+          # api/requirements.txt (1.5.9) - HttpClient talks the v2 API and a
+          # mismatched server can break the protocol.
+          image: chromadb/chroma:1.5.9
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            # Verified against the image's own baked-in /config.yaml
+            # (`persist_path: "/data"`) - NOT /chroma/chroma, which is a
+            # commonly assumed but wrong path for this image and would leave
+            # the PVC unused with data silently written to the ephemeral
+            # container filesystem instead.
+            - name: chroma-data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /api/v2/heartbeat
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/v2/heartbeat
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+  volumeClaimTemplates:
+    - metadata:
+        name: chroma-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ghostkube-chroma-svc
+  namespace: ghostkube
+spec:
+  type: ClusterIP
+  selector:
+    app: ghostkube-chroma
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP

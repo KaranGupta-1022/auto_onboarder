@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 import chromadb
 import requests
+from chromadb.errors import NotFoundError
 from sentence_transformers import SentenceTransformer
 
 from . import pr_ingest
@@ -18,8 +19,37 @@ from .config import Config
 logger = logging.getLogger(__name__)
 
 # 1. Initialize Clients & Models
-client = chromadb.PersistentClient(path=Config.CHROMA_PATH)
+# CHROMA_HOST set (in-cluster, Phase 9) -> talk to the ghostkube-chroma
+# StatefulSet over HTTP. Unset (local/compose) -> PersistentClient on disk.
+if Config.CHROMA_HOST:
+    client = chromadb.HttpClient(host=Config.CHROMA_HOST, port=Config.CHROMA_PORT)
+else:
+    client = chromadb.PersistentClient(path=Config.CHROMA_PATH)
 collection = client.get_or_create_collection(name=Config.CHROMA_COLLECTION_NAME)
+
+
+def _call_collection(method_name: str, *args, **kwargs):
+    """Call a method on the cached collection handle, transparently refreshing
+    it once on a 404 and retrying.
+
+    The `collection` object is bound to a specific server-side collection ID
+    at the time it was fetched. If the Chroma server loses that collection
+    (e.g. the ghostkube-chroma StatefulSet pod restarts against an empty or
+    reset store) the cached handle starts raising NotFoundError on every call
+    even though a fresh get_or_create_collection() would succeed - without
+    this, the API process would need a manual restart to recover.
+    """
+    global collection
+    try:
+        return getattr(collection, method_name)(*args, **kwargs)
+    except NotFoundError:
+        logger.warning(
+            "Cached Chroma collection handle is stale (server-side collection "
+            "gone, likely a Chroma restart) - refreshing and retrying '%s'",
+            method_name,
+        )
+        collection = client.get_or_create_collection(name=Config.CHROMA_COLLECTION_NAME)
+        return getattr(collection, method_name)(*args, **kwargs)
 
 # Embedding model (Bi-Encoder)
 embedding_model = SentenceTransformer(Config.EMBED_MODEL_NAME)
@@ -170,7 +200,8 @@ def _store(chunks, metadatas, extra_metadata: dict | None):
         # Batch the encode: one call for the whole batch rather than one call
         # per chunk inside a loop.
         embeddings = embedding_model.encode(batch_text).tolist()
-        collection.upsert(
+        _call_collection(
+            "upsert",
             ids=[get_chunk_id(t) for t in batch_text],
             embeddings=embeddings,
             documents=batch_text,
@@ -275,7 +306,7 @@ def search_ghost_notes(query: str, top_results: int = 5, ghost_note_id: str | No
     try:
         logger.info("Searching for query: %s", query)
 
-        if collection.count() == 0:
+        if _call_collection("count") == 0:
             return {"query": query, "results": []}
 
         service = None
@@ -286,7 +317,8 @@ def search_ghost_notes(query: str, top_results: int = 5, ghost_note_id: str | No
 
         # Retrieve a wide pool so the file-level pooling below has something to
         # collapse.
-        search_results = collection.query(
+        search_results = _call_collection(
+            "query",
             query_embeddings=[query_embedding],
             n_results=Config.RETRIEVAL_POOL_SIZE,
             include=['documents', 'metadatas', 'distances'],
@@ -298,7 +330,8 @@ def search_ghost_notes(query: str, top_results: int = 5, ghost_note_id: str | No
                 "No chunks matched service=%r for ghost_note_id=%r; falling back to unfiltered search",
                 service, ghost_note_id,
             )
-            search_results = collection.query(
+            search_results = _call_collection(
+                "query",
                 query_embeddings=[query_embedding],
                 n_results=Config.RETRIEVAL_POOL_SIZE,
                 include=['documents', 'metadatas', 'distances'],
@@ -410,7 +443,7 @@ def record_feedback(chunk_id: str, query: str, rating: str) -> dict:
 def health_snapshot() -> dict:
     """Real health: actually touch Chroma so a broken store fails the check."""
     try:
-        count = collection.count()
+        count = _call_collection("count")
         return {"status": "ok", "chroma_connected": True, "chunk_count": count}
     except Exception as e:
         logger.error("Health check failed: %s", e)
