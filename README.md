@@ -157,6 +157,70 @@ access, so pulling straight into its containerd store sidesteps it:
 docker exec ghostkube-control-plane ctr --namespace=k8s.io images pull docker.io/chromadb/chroma:1.5.9
 ```
 
+## `kubectl ghost` plugin (Phase 11)
+
+A Go kubectl plugin — `cmd/kubectl-ghost` — that shows a pod's Ghost Note in the terminal, and
+wraps `kubectl delete pod` with a confirmation prompt so the note is read before anything is
+deleted. Naming is the whole plugin mechanism: any executable named `kubectl-ghost` on `$PATH`
+becomes `kubectl ghost`.
+
+```bash
+# Build
+go build -o kubectl-ghost ./cmd/kubectl-ghost        # add .exe on Windows
+
+# Install: put the binary on $PATH (any directory already on PATH works)
+mv kubectl-ghost ~/bin/            # or copy kubectl-ghost.exe into a PATH dir on Windows
+
+# Show the ghost note for a pod (uses your current kube context/namespace)
+kubectl ghost hello-auth-xxxxxxxxx-yyyyy
+
+# Machine-readable output, no feedback prompt
+kubectl ghost hello-auth-xxxxxxxxx-yyyyy --json
+
+# More/fewer results, longer timeout
+kubectl ghost hello-auth-xxxxxxxxx-yyyyy --top 3 --timeout 2s
+
+# The interception path (PRD Section 5, the demo moment): shows the note,
+# then prompts before delegating to the real `kubectl delete`
+kubectl ghost delete pod hello-auth-xxxxxxxxx-yyyyy
+```
+
+Identity resolution prefers the webhook-injected `GHOST_NOTE_ID` env var (Phase 8) and falls
+back to building `svc:<ghostkube.io/service label>` directly, so the plugin still works against
+a pod in a cluster the Phase 8 webhook hasn't touched. The resolved ID is always sent as
+`ghost_note_id` in the `POST /ghost-note` call; the service name (with the `svc:` prefix
+stripped) is sent as `query`.
+
+**Configuration** — API base URL, in priority order: `GHOSTKUBE_API` env var, then `api_url` in
+`~/.ghostkube.yaml`, then `http://localhost:8000`. Standard client-go overrides
+(`--kubeconfig`, `--namespace`/`-n`, `--context`, ...) work as they do for `kubectl` itself.
+
+**Feedback** — after a non-`--json` show on an interactive terminal, each note gets a
+`[u]p / [d]own / [s]kip` prompt, POSTed to `/feedback`. Skipped automatically for `--json` or
+when stdin isn't a TTY (scripted/piped invocations).
+
+**Verify against kind** (Phase 9 stack applied, see above):
+
+```bash
+kubectl -n ghostkube port-forward svc/ghostkube-api-svc 8000:8000 &
+kubectl apply -f k8s/test-workload.yaml
+POD=$(kubectl get pod -l app=hello-auth -o jsonpath='{.items[0].metadata.name}')
+kubectl ghost "$POD"
+kubectl ghost delete pod "$POD"
+```
+
+Round-trip latency against the 800ms budget: measured 146, 149, 150, 155, 162 ms across 5 runs
+of `kubectl ghost $POD --top 3 --json` against a port-forwarded in-cluster Brain API (p95 ≈
+162ms). Re-measure with e.g. `Measure-Command { kubectl ghost $POD }` (PowerShell) or
+`time kubectl ghost $POD` (bash).
+
+**Note on flag placement**: `--top`/`--json`/`--timeout` and the standard `--namespace`/
+`--kubeconfig`/`--context` flags must come *before* `delete` (`kubectl ghost --top 1 delete pod
+NAME`), not after. Anything after `delete pod NAME` is passed straight through to the real
+`kubectl` untouched (so `-n`/`--namespace` also works there, in kubectl's own position:
+`kubectl ghost delete pod NAME -n ns`) — but a bare `--top` there would be rejected by kubectl
+itself, since it isn't one of kubectl's own flags.
+
 ## Completed Work - Phase 1 & Phase 2
 
 ### ✅ Phase 1: Planning & Setup
