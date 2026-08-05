@@ -211,6 +211,8 @@ __marimo__/
 /bin/
 ghostkube-cli
 ghostkube-operator
+kubectl-ghost
+kubectl-ghost.exe
 # Test output
 *.out
 # Vendor

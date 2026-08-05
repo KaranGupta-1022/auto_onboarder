@@ -35,6 +35,15 @@ class GhostNoteResponse(BaseModel):
     query: str
     results: List[GhostNoteResult]
 
+# Chunk Lookup Endpoint (Note Detail direct-link support)
+
+class ChunkResponse(BaseModel):
+    # No relevance_score here - unlike GhostNoteResult, a direct by-ID lookup
+    # has no query to score relevance against.
+    chunk_id: str
+    text: str
+    metadata: Dict[str, Any]
+
 # Feedback Endpoint
 
 class FeedbackRequest(BaseModel):
@@ -46,6 +55,20 @@ class FeedbackResponse(BaseModel):
     recorded: bool
     total_up: int
     total_down: int
+
+# Pod List Endpoint (Cluster page, Phase 12)
+
+class PodInfo(BaseModel):
+    name: str
+    namespace: str
+    service_label: str
+    # None when the webhook hasn't (yet, or ever) patched this pod's
+    # GHOST_NOTE_ID env var in - the label alone doesn't prove injection.
+    ghost_note_id: Optional[str] = None
+    injected: bool
+
+class PodListResponse(BaseModel):
+    pods: List[PodInfo]
 
 # Pod State Endpoint (Shadow Sidecar, PRD 4B)
 

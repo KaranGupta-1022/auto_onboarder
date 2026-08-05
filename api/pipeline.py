@@ -270,6 +270,19 @@ async def ingest_url(url: str, source_type: str = "repo", metadata: dict | None 
             if pr_meta:
                 meta.update(pr_meta)
 
+        # Re-ingesting a URL upserts chunks whose content is unchanged (same
+        # hash -> same ID) but silently leaves behind chunks from files that
+        # were since deleted or renamed in the source - upsert alone can only
+        # add/update, never remove. Clearing this URL's prior chunks first
+        # makes re-ingest a real sync instead of a monotonic append. Scoped to
+        # (source_url, source_type) rather than source_url alone because the
+        # same repo URL is ingested under both "repo" and "pr" - clearing
+        # unscoped would wipe one on a re-ingest of the other.
+        _call_collection(
+            "delete",
+            where={"$and": [{"source_url": url}, {"source_type": source_type}]},
+        )
+
         stored = _store(chunks, metadatas, metadata)
         files_seen = len({m["path"] for m in metadatas})
         logger.info("Successfully stored %d chunks", stored)
@@ -289,6 +302,24 @@ async def ingest_url(url: str, source_type: str = "repo", metadata: dict | None 
             "total_characters": 0,
             "message": f"Error: {str(e)}",
         }
+
+
+def get_chunk_by_id(chunk_id: str) -> dict | None:
+    """Direct lookup for the Note Detail page's non-search entry point (a
+    fresh/refreshed/shared URL, as opposed to a click-through from an
+    /ghost-note search result that already carries the full chunk).
+
+    Returns the full, untruncated chunk text - unlike GhostNoteResult.text,
+    which /ghost-note truncates to a 300-char preview for the results list.
+    """
+    result = _call_collection("get", ids=[chunk_id], include=["documents", "metadatas"])
+    if not result["ids"]:
+        return None
+    return {
+        "chunk_id": result["ids"][0],
+        "text": result["documents"][0],
+        "metadata": result["metadatas"][0],
+    }
 
 
 def search_ghost_notes(query: str, top_results: int = 5, ghost_note_id: str | None = None) -> dict:

@@ -59,12 +59,14 @@ sets `CHROMA_HOST=ghostkube-chroma-svc` / `CHROMA_PORT=8000` and `api/pipeline.p
 
 ## Endpoints
 
-| Method | Path          | Purpose                               |
-| ------ | ------------- | ------------------------------------- |
-| GET    | `/health`     | Health check                          |
-| POST   | `/ingest`     | Ingest a URL into the vector store    |
-| POST   | `/ghost-note` | Semantic search over ingested content |
-| GET    | `/`           | Endpoint index + link to `/docs`      |
+| Method | Path                | Purpose                                    |
+| ------ | ------------------- | ------------------------------------------ |
+| GET    | `/health`           | Health check                               |
+| POST   | `/ingest`           | Ingest a URL into the vector store         |
+| POST   | `/ghost-note`       | Semantic search over ingested content      |
+| GET    | `/chunk/{chunk_id}` | Fetch one chunk's full text + metadata by ID |
+| GET    | `/pods`             | List pods labeled `ghostkube.io/service` and their webhook-injection status |
+| GET    | `/`                 | Endpoint index + link to `/docs`           |
 
 Request/response shapes live in `api/models.py`. Note that `API_SCHEMA.md` at the repo root
 currently documents `/ghost-note` as a GET with different field names — the code above is what
@@ -90,3 +92,27 @@ headless browser.
 
 `eval/queries_pr_tribal.json` seeds a few tribal-knowledge queries ("why was X changed", "known
 issues with Y") against a real smoke-ingested repo — see its `_comment` for how it was seeded.
+
+## Cluster pod visibility (Phase 12)
+
+`GET /pods` powers the Console's Cluster page. `api/pods.py::list_watched_pods()` lists every pod
+cluster-wide carrying the `ghostkube.io/service` label, via the official `kubernetes` Python
+client, and reports for each: `name`, `namespace`, `service_label`, `ghost_note_id`, and
+`injected: bool`.
+
+`injected` is **not** derived from the label alone — a labeled pod could predate the webhook, or
+the webhook could be down. It's `true` only when `GHOST_NOTE_ID` is actually present in a
+container's env, i.e. `webhook/webhook.py::make_patch_for_pod` really ran against this pod.
+
+Config resolution: tries `load_incluster_config()` first (Phase 9's `ghostkube-api` Deployment),
+falls back to the local kubeconfig (kind on a laptop, Phase 7). Best-effort throughout — a missing
+kubeconfig, an unreachable cluster, or an RBAC denial all log a warning and return an empty list
+rather than raising, so the Cluster page degrades to "no pods" instead of the whole Brain API
+going down over a Kubernetes hiccup.
+
+**RBAC:** on a laptop against `kind`, the local kubeconfig's admin credentials already have list
+access to pods cluster-wide — nothing extra needed. Running `ghostkube-api` **in-cluster** (Phase
+9's Deployment) will need a `Role`/`ClusterRole` granting `list`/`get` on `pods` bound to its
+`ServiceAccount` via a `RoleBinding`/`ClusterRoleBinding` — not yet added to `k8s/`, since Phase 9
+deployed the API without ever calling the Kubernetes API itself. Needed before `/pods` will return
+anything non-empty when called from inside the cluster rather than from a laptop's kubeconfig.

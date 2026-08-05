@@ -8,12 +8,14 @@ import asyncio
 from .config import config
 from .models import (
     IngestRequest, IngestResponse, GhostNoteRequest, GhostNoteResponse,
-    FeedbackRequest, FeedbackResponse, PodStateRequest, PodStateResponse, ErrorResponse,
+    ChunkResponse, FeedbackRequest, FeedbackResponse, PodListResponse,
+    PodStateRequest, PodStateResponse, ErrorResponse,
 )
 from .pipeline import (
-    ingest_url, search_ghost_notes, health_snapshot,
+    ingest_url, search_ghost_notes, get_chunk_by_id, health_snapshot,
     record_feedback, feedback_summary,
 )
+from .pods import list_watched_pods
 from starlette.responses import JSONResponse
 
 
@@ -113,6 +115,36 @@ def ghost_note_endpoint(request: GhostNoteRequest):
         logger.error(f"Error in ghost-note endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+# Chunk Lookup Endpoint
+# Direct by-ID fetch so the Note Detail page can render on a fresh/refreshed/
+# shared URL and not only when navigated to from an /ghost-note search result.
+# Plain `def`: collection.get() is the same blocking Chroma call pattern as
+# ghost_note_endpoint above, so it belongs in the threadpool too.
+@app.get("/chunk/{chunk_id}", response_model=ChunkResponse)
+def get_chunk_endpoint(chunk_id: str):
+    try:
+        result = get_chunk_by_id(chunk_id)
+    except Exception as e:
+        logger.error(f"Error in chunk endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"No chunk found with id {chunk_id}")
+
+    return ChunkResponse(**result)
+
+# Pod List Endpoint (Cluster page, Phase 12)
+# Read-only: lists pods carrying ghostkube.io/service and whether the
+# mutating webhook actually injected GHOST_NOTE_ID into them. Never 500s on a
+# missing/unreachable cluster - list_watched_pods() is best-effort and
+# degrades to an empty list, since this page just shows "no pods" rather than
+# taking the whole Brain API down over a Kubernetes API hiccup.
+# Plain `def`: the kubernetes client is a blocking HTTP call under the hood,
+# same threadpool reasoning as ghost_note_endpoint above.
+@app.get("/pods", response_model=PodListResponse)
+def list_pods_endpoint():
+    return PodListResponse(pods=list_watched_pods())
+
 # Feedback Endpoints
 # Plain `def` for the same reason as ghost_note_endpoint above: these do
 # blocking file I/O, so Starlette should pool them rather than run them on the
@@ -179,6 +211,8 @@ async def root():
             "health": "GET /health",
             "ingest": "POST /ingest",
             "search": "POST /ghost-note",
+            "chunk": "GET /chunk/{chunk_id}",
+            "pods": "GET /pods",
             "feedback": "POST /feedback",
             "feedback_summary": "GET /feedback/summary",
             "pod_state": "POST /pod-state"
