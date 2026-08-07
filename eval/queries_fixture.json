@@ -1,0 +1,38 @@
+[
+    {
+      "_comment": "Hermetic eval set for tests/fixtures/repo_content.md (tests/test_retrieval.py), not the live chroma_db. 20 positives (one per fixture file) + 10 negatives (expected_path: null) on topics the fixture corpus genuinely does not cover.",
+      "query": null,
+      "expected_path": null
+    },
+    {"query": "how do I verify a user's password when they log in", "expected_path": "services/auth/login.py"},
+    {"query": "where do we check the JWT bearer token on incoming requests", "expected_path": "services/auth/middleware.py"},
+    {"query": "how does the forgot password flow send a reset code", "expected_path": "services/auth/password_reset.py"},
+    {"query": "where do we create a Stripe charge for a credit card payment", "expected_path": "services/payments/charge.py"},
+    {"query": "how do we refund a previously captured payment", "expected_path": "services/payments/refund.py"},
+    {"query": "where do we send transactional emails through SendGrid", "expected_path": "services/notifications/email.py"},
+    {"query": "how are SMS notifications sent via Twilio", "expected_path": "services/notifications/sms.py"},
+    {"query": "where is the Postgres connection pool configured", "expected_path": "services/database/connection.py"},
+    {"query": "how do we run Alembic database migrations", "expected_path": "services/database/migrations.py"},
+    {"query": "what validates inventory before creating a new order", "expected_path": "services/orders/create_order.py"},
+    {"query": "what happens when an order gets cancelled", "expected_path": "services/orders/cancel_order.py"},
+    {"query": "where do we track warehouse stock levels for a SKU", "expected_path": "services/inventory/stock.py"},
+    {"query": "how is the product catalog search index built", "expected_path": "services/search/indexer.py"},
+    {"query": "where is the structured JSON logger configured", "expected_path": "services/logging/logger.py"},
+    {"query": "which React component renders the shopping cart", "expected_path": "frontend/components/Cart.jsx"},
+    {"query": "which component collects credit card details with Stripe Elements on checkout", "expected_path": "frontend/components/Checkout.jsx"},
+    {"query": "what's the shared fetch wrapper the frontend uses to call the backend API", "expected_path": "frontend/utils/api.js"},
+    {"query": "what docker compose file wires up the local dev services", "expected_path": "infra/docker-compose.yml"},
+    {"query": "what's the Kubernetes deployment manifest for the orders service", "expected_path": "infra/k8s/deployment.yaml"},
+    {"query": "what script seeds the database with fake test data", "expected_path": "scripts/seed_db.py"},
+    {"query": "how do I set up two-factor authentication for a user account", "expected_path": null},
+    {"query": "where do we implement GraphQL resolvers for the API", "expected_path": null},
+    {"query": "how are uploaded images resized and compressed", "expected_path": null},
+    {"query": "what rate limiter throttles incoming API requests", "expected_path": null},
+    {"query": "where is the WebSocket server for real-time order updates", "expected_path": null},
+    {"query": "how do we cache frequently requested product pages with Redis", "expected_path": null},
+    {"query": "what generates PDF invoices for completed orders", "expected_path": null},
+    {"query": "how do we import products in bulk from a CSV file", "expected_path": null},
+    {"query": "where is single sign-on configured with an external OAuth provider", "expected_path": null},
+    {"query": "how do feature flags gate new functionality for beta users", "expected_path": null}
+  ]
+  

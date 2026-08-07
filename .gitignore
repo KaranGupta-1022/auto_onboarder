@@ -268,7 +268,9 @@ secrets.json
 extfile.cnf
 
 # --- Generated scraper output ---
-repo_content.md
+# Root-anchored: tests/fixtures/repo_content.md is a committed test fixture,
+# not scraper output, and must not be swept up by this rule.
+/repo_content.md
 
 # --- Ghost Note feedback events (append-only JSONL) ---
 feedback.jsonl

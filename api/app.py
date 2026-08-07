@@ -65,21 +65,22 @@ def health_check():
 @app.post("/ingest", response_model=IngestResponse)
 async def ingest_endpoint(request: IngestRequest):
     logger.info(f"Received ingest request for URL: {request.url}")
-    
+
     try:
         result = await ingest_url(
             url=request.url,
             source_type=request.source_type,
             metadata=request.metadata
         )
-        
-        if result["status"] == "error":
-            raise HTTPException(status_code=400, detail=result["message"])
-        
-        return IngestResponse(**result)
     except Exception as e:
         logger.error(f"Error in ingest endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+    if result["status"] == "error":
+        raise HTTPException(status_code=400, detail=result["message"])
+
+    return IngestResponse(**result)
+    
 
 # Ghost Note Search Endpoint
 # Search for relevant ghost notes.    
