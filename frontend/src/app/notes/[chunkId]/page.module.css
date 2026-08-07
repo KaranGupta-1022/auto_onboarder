@@ -106,13 +106,17 @@
 
 .summaryBlock {
   background: var(--surface);
-  border: 1px dashed var(--border);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 14px 20px;
   margin-bottom: 20px;
+}
+
+.summaryHeader {
   display: flex;
   align-items: baseline;
   gap: 8px;
+  margin-bottom: 6px;
 }
 
 .summaryLabel {
@@ -120,10 +124,17 @@
   font-size: 0.85rem;
 }
 
-.summaryPlaceholder {
+.summaryBadge {
   color: var(--muted);
-  font-size: 0.85rem;
-  font-style: italic;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.summaryText {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .feedbackSection {

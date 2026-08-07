@@ -10,6 +10,7 @@ from .models import (
     IngestRequest, IngestResponse, GhostNoteRequest, GhostNoteResponse,
     ChunkResponse, FeedbackRequest, FeedbackResponse, PodListResponse,
     PodStateRequest, PodStateResponse, ErrorResponse,
+    IntentRequest, IntentResponse,
 )
 from .pipeline import (
     ingest_url, search_ghost_notes, get_chunk_by_id, health_snapshot,
@@ -17,6 +18,7 @@ from .pipeline import (
 )
 from .pods import list_watched_pods
 from starlette.responses import JSONResponse
+from .intent import classify as classify_intent
 
 
 # Setup logging
@@ -215,11 +217,23 @@ async def root():
             "pods": "GET /pods",
             "feedback": "POST /feedback",
             "feedback_summary": "GET /feedback/summary",
-            "pod_state": "POST /pod-state"
+            "pod_state": "POST /pod-state",
+            "intent": "POST /intent"
         },
         "docs": "/docs"
     }
     
+
+# Intent Classifier Endpoint (Phase 13.3)
+# Rule baseline (verb allowlist) unless a trained checkpoint is loaded under
+# Config.INTENT_MODEL_DIR - see api/intent.py. Plain `def`: model inference
+# (when a checkpoint is loaded) is blocking CPU work, same threadpool
+# reasoning as ghost_note_endpoint above.
+@app.post("/intent", response_model=IntentResponse)
+def intent_endpoint(request: IntentRequest):
+    return IntentResponse(**classify_intent(request.command))
+
+
 # Error Handler
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):

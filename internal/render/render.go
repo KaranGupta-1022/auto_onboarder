@@ -49,18 +49,28 @@ func colorize(text, hex string, enabled bool) string {
 }
 
 // Note writes one Ghost Note result: 👻 id (muted), note text (accent),
-// source path (muted), relevance score (muted).
-func Note(w io.Writer, ghostNoteID string, result api.GhostNoteResult, color bool) {
+// source path (muted), relevance score (muted). When summary is non-empty
+// (Phase 13 Groq synthesis, top result only), it replaces result.Text and
+// summaryPath replaces the metadata path - every other result, and the top
+// result when synthesis wasn't available, still renders the raw chunk.
+func Note(w io.Writer, ghostNoteID string, result api.GhostNoteResult, summary, summaryPath string, color bool) {
 	fmt.Fprintln(w, colorize(fmt.Sprintf("👻 %s", ghostNoteID), colorMuted, color))
-	fmt.Fprintln(w, colorize(result.Text, colorAccent, color))
 
-	path, _ := result.Metadata["path"].(string)
+	text, path := result.Text, summaryPath
+	if summary != "" {
+		text = summary
+	}
+	if path == "" {
+		path, _ = result.Metadata["path"].(string)
+	}
 	if path == "" {
 		path = "unknown"
 	}
+	fmt.Fprintln(w, colorize(text, colorAccent, color))
 	fmt.Fprintln(w, colorize(fmt.Sprintf("source: %s", path), colorMuted, color))
 	fmt.Fprintln(w, colorize(fmt.Sprintf("relevance: %.2f", result.RelevanceScore), colorMuted, color))
 }
+
 
 // DangerPrompt renders the "Proceed with caution? (y/n)" prompt in the
 // danger color, matching design/terminal.png.

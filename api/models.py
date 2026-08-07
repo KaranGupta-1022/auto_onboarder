@@ -34,6 +34,13 @@ class GhostNoteResult(BaseModel):
 class GhostNoteResponse(BaseModel):
     query: str
     results: List[GhostNoteResult]
+    # Phase 13: synthesized summary for the TOP result only, not per-result -
+    # one Groq call per search instead of N. None/False when synthesis is
+    # disabled, there were no results, or the Groq call failed.
+    summary: Optional[str] = None
+    summary_path: Optional[str] = None
+    synthesized: bool = False
+
 
 # Chunk Lookup Endpoint (Note Detail direct-link support)
 
@@ -87,3 +94,12 @@ class PodStateResponse(BaseModel):
 class ErrorResponse(BaseModel):
     error: str
     status_code: int
+
+# Intent Classifier Endpoint (Phase 13.3)
+class IntentRequest(BaseModel):
+    command: str
+
+class IntentResponse(BaseModel):
+    label: Literal["high_risk", "low_risk", "no_note"]
+    source: Literal["rules", "model"]
+

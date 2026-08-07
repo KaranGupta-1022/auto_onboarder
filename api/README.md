@@ -72,6 +72,20 @@ Request/response shapes live in `api/models.py`. Note that `API_SCHEMA.md` at th
 currently documents `/ghost-note` as a GET with different field names — the code above is what
 actually runs.
 
+## Note synthesis (Phase 13)
+
+`/ghost-note` responses carry an optional top-level `summary` (`api/synthesis.py`, backed by Groq):
+one or two sentences describing what the top-ranked chunk does and any known gotcha, always paired
+with `summary_path` citing exactly which file it came from.
+
+**This is not a chatbot.** There is no conversation, no chat surface, no follow-up turns, and no
+freeform user prompt ever reaches the LLM. Synthesis only runs after retrieval has already decided
+which chunk is relevant; the LLM's only job is turning that one already-selected chunk into a
+readable sentence, grounded strictly in its text, with the source path always attached so the
+sentence stays verifiable. If Groq is unavailable — missing key, rate limit, no network — the raw
+chunk is shown instead (`synthesized: false`); the Ghost Note never disappears because an external
+API is down.
+
 ## PR & issue ingestion (Phase 8.5)
 
 `POST /ingest {"url": "https://github.com/<owner>/<repo>", "source_type": "pr"}` indexes the

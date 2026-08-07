@@ -52,5 +52,45 @@ class Config:
     # api/pr_ingest.py::list_merged_prs and api/README.md.
     PR_LOOKBACK_MONTHS = int(os.getenv("PR_LOOKBACK_MONTHS", 6))
 
+    # Phase 13: Groq note synthesis. Formatting on retrieved facts, not a
+    # chatbot - see api/synthesis.py. Fails soft: missing key, rate limit, or
+    # network error all fall back to the raw top chunk (synthesized=False),
+    # never a 500.
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+    SYNTHESIS_ENABLED = _flag("SYNTHESIS_ENABLED", True)
+
+    # JSON map of chunk_id -> synthesized result. Keyed by chunk_id because the
+    # same pod/chunk gets inspected repeatedly and re-generating an identical
+    # summary burns both latency budget and Groq's free-tier quota.
+    SYNTHESIS_CACHE_PATH = os.getenv("SYNTHESIS_CACHE_PATH", "./synthesis_cache.json")
+
+        # Phase 13.2: optional Groq LLM reranker, MEASURED (not assumed) against
+    # the bi-encoder-only baseline - see api/rerank_groq.py and the Phase 13.2
+    # notes in GhostKube_Guide.md. Default OFF: the bi-encoder already hits
+    # 100% hit@1 on the seeded eval queries, so an LLM reranker can only tie
+    # or lose here - it only earns its place on a harder corpus. Same lesson
+    # as the cross-encoder in RERANK_ENABLED above; don't repeat that mistake.
+    GROQ_RERANK_ENABLED = _flag("GROQ_RERANK_ENABLED", False)
+    GROQ_RERANK_TIMEOUT_S = float(os.getenv("GROQ_RERANK_TIMEOUT_S", "0.3"))
+
+    # Phase 13.3 intent classifier: directory a fine-tuned DistilBERT
+    # checkpoint is loaded from (scripts/train_intent.py writes here, once it
+    # exists). Missing directory - the default until training happens - falls
+    # back to the rule baseline in api/intent.py, the same
+    # "baseline-is-the-automatic-fallback" pattern as the Groq reranker.
+    INTENT_MODEL_DIR = os.getenv("INTENT_MODEL_DIR", "./models/intent")
+
+    # Default OFF: measured against the rule baseline on a family-holdout
+    # split (see GhostKube_Guide.md Phase 13.3 notes) and the fine-tuned
+    # DistilBERT checkpoint lost decisively (31-42% vs 65% accuracy) under
+    # both full fine-tuning and a frozen-backbone linear probe. A checkpoint
+    # existing under INTENT_MODEL_DIR is not evidence it should be served -
+    # same "measure before adopt" lesson as GROQ_RERANK_ENABLED and the
+    # cross-encoder RERANK_ENABLED above. Flip this on only after a checkpoint
+    # actually beats the rule baseline on held-out families.
+    INTENT_MODEL_ENABLED = _flag("INTENT_MODEL_ENABLED", False)
+
+
 config = Config()
     

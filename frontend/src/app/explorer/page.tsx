@@ -22,6 +22,11 @@ export default function ExplorerPage() {
   const [lastQuery, setLastQuery] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [results, setResults] = useState<GhostNoteResult[]>([]);
+  const [topSummary, setTopSummary] = useState<{
+    summary: string;
+    summary_path: string | null;
+    synthesized: boolean;
+  } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const [feedbackGiven, setFeedbackGiven] = useState<
@@ -40,6 +45,15 @@ export default function ExplorerPage() {
     try {
       const result = await ghostNote({ query: trimmed, top_results: 8 });
       setResults(result.results);
+      setTopSummary(
+        result.results.length > 0
+          ? {
+              summary: result.summary,
+              summary_path: result.summary_path,
+              synthesized: result.synthesized,
+            }
+          : null
+      );
       setLastQuery(trimmed);
       setStatus("success");
     } catch (err) {
@@ -53,6 +67,7 @@ export default function ExplorerPage() {
   function handleClear() {
     setQuery("");
     setResults([]);
+    setTopSummary(null);
     setLastQuery("");
     setStatus("idle");
     setErrorMessage(null);
@@ -75,9 +90,17 @@ export default function ExplorerPage() {
   }
 
   function openNote(result: GhostNoteResult) {
+    // The Brain API only synthesizes a summary for the top hit (one Groq
+    // call per search, not per-result), so only attach it when this is that
+    // result - everything else genuinely has no summary to show.
+    const isTopResult = results[0]?.chunk_id === result.chunk_id;
     window.sessionStorage.setItem(
       `${NOTE_STORAGE_PREFIX}${result.chunk_id}`,
-      JSON.stringify({ ...result, query: lastQuery })
+      JSON.stringify({
+        ...result,
+        query: lastQuery,
+        ...(isTopResult && topSummary ? topSummary : {}),
+      })
     );
   }
 

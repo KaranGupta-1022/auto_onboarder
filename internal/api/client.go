@@ -28,8 +28,11 @@ type GhostNoteResult struct {
 }
 
 type GhostNoteResponse struct {
-	Query   string            `json:"query"`
-	Results []GhostNoteResult `json:"results"`
+	Query       string            `json:"query"`
+	Results     []GhostNoteResult `json:"results"`
+	Summary     string            `json:"summary,omitempty"`
+	SummaryPath string            `json:"summary_path,omitempty"`
+	Synthesized bool              `json:"synthesized,omitempty"`
 }
 
 type FeedbackRequest struct {
@@ -42,6 +45,15 @@ type FeedbackResponse struct {
 	Recorded  bool `json:"recorded"`
 	TotalUp   int  `json:"total_up"`
 	TotalDown int  `json:"total_down"`
+}
+
+type IntentRequest struct {
+	Command string `json:"command"`
+}
+
+type IntentResponse struct {
+	Label  string `json:"label"`  // "high_risk" | "low_risk" | "no_note"
+	Source string `json:"source"` // "rules" | "model"
 }
 
 type errorResponse struct {
@@ -72,6 +84,14 @@ func (c *Client) GhostNote(ctx context.Context, req GhostNoteRequest) (*GhostNot
 func (c *Client) Feedback(ctx context.Context, req FeedbackRequest) (*FeedbackResponse, error) {
 	var resp FeedbackResponse
 	if err := c.post(ctx, "/feedback", req, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+func (c *Client) Intent(ctx context.Context, req IntentRequest) (*IntentResponse, error) {
+	var resp IntentResponse
+	if err := c.post(ctx, "/intent", req, &resp); err != nil {
 		return nil, err
 	}
 	return &resp, nil

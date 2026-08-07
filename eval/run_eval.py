@@ -29,6 +29,9 @@ import chromadb
 from sentence_transformers import SentenceTransformer
 
 from search import MAX_DISTANCE, POOL_SIZE, expand_query, pool_by_file
+from api import rerank_groq
+from api.config import Config
+
 
 CHROMA_PATH = os.getenv("CHROMA_PATH", "./chroma_db")
 COLLECTION = os.getenv("CHROMA_COLLECTION_NAME", "repo_docs")
@@ -73,7 +76,10 @@ def main():
 
     print(f"\nEval set : {query_file} ({len(cases)} queries)")
     print(f"Index    : {COLLECTION} at {CHROMA_PATH} ({total_chunks} chunks)")
-    print(f"Model    : {EMBED_MODEL}   pool={POOL_SIZE}  max_distance={MAX_DISTANCE}\n")
+    rerank_on = Config.GROQ_RERANK_ENABLED
+    print(f"Model    : {EMBED_MODEL}   pool={POOL_SIZE}  max_distance={MAX_DISTANCE}  "
+          f"groq_rerank={'on' if rerank_on else 'off'}\n")
+
 
     rows = []
     hits = {1: 0, 3: 0, 5: 0}
@@ -85,11 +91,20 @@ def main():
         )
         ranked = []
         if results["documents"] and results["documents"][0]:
+            # Pool to 10, not 5: gives the reranker (when on) room to pull a
+            # match up from outside the naive top 5. Sliced back to 5 below,
+            # so the "off" baseline is unaffected by the wider pool.
             ranked = pool_by_file(results["documents"][0],
                                   results["distances"][0],
                                   results["metadatas"][0],
-                                  top_k=5)
+                                  top_k=10)
+        if rerank_on and ranked:
+            candidates = [(doc, {"path": path}, score) for path, doc, score in ranked]
+            reranked = rerank_groq.rerank(query, candidates)
+            ranked = [(meta["path"], doc, score) for doc, meta, score in reranked]
+        ranked = ranked[:5]
         rank = rank_of(expected, ranked)
+
         for k in (1, 3, 5):
             if rank is not None and rank <= k:
                 hits[k] += 1

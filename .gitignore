@@ -226,6 +226,12 @@ kubectl-ghost.exe
 *.ckpt
 *.onnx
 *.safetensors
+# Phase 13.3 trained checkpoint (scripts/train_intent.py writes here) - the
+# *.bin/*.safetensors rules above already catch the weight file itself, but
+# ignore the whole directory so the small tokenizer/config JSON alongside it
+# doesn't get committed either. Documented as a "run this script" step, not a
+# committed artifact.
+models/
 # HuggingFace Cache
 .cache/
 
@@ -266,6 +272,9 @@ repo_content.md
 
 # --- Ghost Note feedback events (append-only JSONL) ---
 feedback.jsonl
+
+# --- Phase 13 synthesis cache (chunk_id -> Groq response, runtime-generated) ---
+synthesis_cache.json
 
 # --- Miscellaneous ---
 GhostKube_Guide.md

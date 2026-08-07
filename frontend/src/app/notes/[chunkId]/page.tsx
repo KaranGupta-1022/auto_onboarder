@@ -22,6 +22,11 @@ interface StoredNote {
   relevance_score: number;
   metadata: Record<string, unknown>;
   query: string;
+  // Only present when this chunk was the top hit of its search - the Brain
+  // API synthesizes one summary per search, not per-result.
+  summary?: string;
+  summary_path?: string | null;
+  synthesized?: boolean;
 }
 
 type Status = "loading" | "success" | "error";
@@ -44,6 +49,8 @@ export default function NoteDetailPage() {
   const [metadata, setMetadata] = useState<Record<string, unknown>>({});
   const [relevanceScore, setRelevanceScore] = useState<number | null>(null);
   const [query, setQuery] = useState<string | null>(null);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [synthesized, setSynthesized] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState<"up" | "down" | null>(null);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
@@ -60,6 +67,8 @@ export default function NoteDetailPage() {
         setMetadata(stored.metadata);
         setRelevanceScore(stored.relevance_score);
         setQuery(stored.query || null);
+        setSummary(stored.summary ?? null);
+        setSynthesized(stored.synthesized ?? false);
         setStatus("success");
         return;
       } catch {
@@ -76,6 +85,11 @@ export default function NoteDetailPage() {
         setMetadata(chunk.metadata);
         setRelevanceScore(null);
         setQuery(null);
+        // getChunk() is a direct-ID lookup with no search context, so there's
+        // no top-result summary to attach (the Brain API only synthesizes
+        // one per search).
+        setSummary(null);
+        setSynthesized(false);
         setStatus("success");
       })
       .catch((err) => {
@@ -153,10 +167,17 @@ export default function NoteDetailPage() {
 
             <pre className={styles.textBlock}>{text}</pre>
 
-            <div className={styles.summaryBlock}>
-              <span className={styles.summaryLabel}>Summary</span>
-              <span className={styles.summaryPlaceholder}>(Phase 13)</span>
-            </div>
+            {summary && (
+              <div className={styles.summaryBlock}>
+                <div className={styles.summaryHeader}>
+                  <span className={styles.summaryLabel}>Summary</span>
+                  <span className={styles.summaryBadge}>
+                    {synthesized ? "AI-synthesized" : "Excerpt"}
+                  </span>
+                </div>
+                <p className={styles.summaryText}>{summary}</p>
+              </div>
+            )}
 
             <div className={styles.feedbackSection}>
               <p className={styles.feedbackPrompt}>Was this note helpful?</p>

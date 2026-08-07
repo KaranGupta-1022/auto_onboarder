@@ -11,6 +11,8 @@ from chromadb.errors import NotFoundError
 from sentence_transformers import SentenceTransformer
 
 from . import pr_ingest
+from . import synthesis
+from . import rerank_groq
 from .chunking import (
     ALLOWED_EXTENSIONS, FILE_HEADER, SCHEMA_VERSION, chunk_repo_document, is_ignored,
 )
@@ -384,7 +386,17 @@ def search_ghost_notes(query: str, top_results: int = 5, ghost_note_id: str | No
             if path not in best or dist < best[path][2]:
                 best[path] = (doc, meta, dist)
 
-        pooled = sorted(best.values(), key=lambda x: x[2])[:top_results]
+        candidates = sorted(best.values(), key=lambda x: x[2])
+
+        # Phase 13.2: the Groq reranker gets a wider pool (up to 10) than the
+        # final top_results slice - its whole point is pulling the true best
+        # answer up from outside the bi-encoder's naive top 5, so reordering
+        # only within top_results would defeat that.
+        if Config.GROQ_RERANK_ENABLED:
+            head, tail = candidates[:10], candidates[10:]
+            candidates = rerank_groq.rerank(query, head) + tail
+
+        pooled = candidates[:top_results]
 
         if Config.RERANK_ENABLED:
             reranker = get_reranker()
@@ -413,7 +425,19 @@ def search_ghost_notes(query: str, top_results: int = 5, ghost_note_id: str | No
             for doc, meta, score in scored
         ]
 
-        return {"query": query, "results": results}
+        # One Groq call per search, scoped to the top result only - not one
+        # per result - to keep latency and free-tier quota bounded. Always
+        # returns a summary/source_path/synthesized triple; falls back to the
+        # raw top chunk internally if Groq is unavailable (see synthesis.py).
+        summary_result = synthesis.synthesize(results, service_name=service)
+
+        return {
+            "query": query,
+            "results": results,
+            "summary": summary_result["summary"],
+            "summary_path": summary_result["source_path"],
+            "synthesized": summary_result["synthesized"],
+        }
 
     except Exception as e:
         logger.error("Error during search: %s", e)

@@ -91,7 +91,7 @@ func runShow(cmd *cobra.Command, args []string) error {
 		return printJSON(resp)
 	}
 
-	display(os.Stdout, identity.GhostNoteID, resp.Results)
+	display(os.Stdout, identity.GhostNoteID, resp)
 	collectFeedback(os.Stdin, os.Stdout, resp.Query, resp.Results)
 	return nil
 }
@@ -108,6 +108,23 @@ func newDeleteCmd() *cobra.Command {
 		SilenceUsage:       true,
 		RunE:               runDelete,
 	}
+}
+
+// shouldShowNote asks the Brain API whether this delete command warrants a
+// Ghost Note at all (Phase 13.3). Fails open on any error - an unreachable
+// API should never silently hide a note that would otherwise have shown, the
+// same principle as synthesis's fallback-to-raw-chunk.
+func shouldShowNote(args []string) bool {
+	client := api.New(config.APIURL(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	command := "kubectl delete " + strings.Join(args, " ")
+	resp, err := client.Intent(ctx, api.IntentRequest{Command: command})
+	if err != nil {
+		return true
+	}
+	return resp.Label != "no_note"
 }
 
 func runDelete(cmd *cobra.Command, args []string) error {
@@ -135,12 +152,13 @@ func runDelete(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resp, err := fetchNotes(identity)
-	if err != nil {
-		return err
+	if shouldShowNote(args) {
+		resp, err := fetchNotes(identity)
+		if err != nil {
+			return err
+		}
+		display(os.Stdout, identity.GhostNoteID, resp)
 	}
-
-	display(os.Stdout, identity.GhostNoteID, resp.Results)
 
 	color := render.ColorEnabled(os.Stdout)
 	render.DangerPrompt(os.Stdout, "\nProceed with caution? (y/n) ", color)
@@ -236,14 +254,19 @@ func printJSON(resp *api.GhostNoteResponse) error {
 	return enc.Encode(resp)
 }
 
-func display(w *os.File, ghostNoteID string, results []api.GhostNoteResult) {
+func display(w *os.File, ghostNoteID string, resp *api.GhostNoteResponse) {
+	results := resp.Results
 	if len(results) == 0 {
 		fmt.Fprintln(w, "No ghost notes found.")
 		return
 	}
 	color := render.ColorEnabled(w)
 	for i, r := range results {
-		render.Note(w, ghostNoteID, r, color)
+		var summary, summaryPath string
+		if i == 0 && resp.Synthesized {
+			summary, summaryPath = resp.Summary, resp.SummaryPath
+		}
+		render.Note(w, ghostNoteID, r, summary, summaryPath, color)
 		if i < len(results)-1 {
 			fmt.Fprintln(w)
 		}

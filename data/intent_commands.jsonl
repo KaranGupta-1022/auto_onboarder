@@ -1,0 +1,479 @@
+{"command": "k explain pvc", "label": "low_risk", "family": "explain"}
+{"command": "kubectl expose deployment payment-gateway --port=80 --target-port=8080", "label": "low_risk", "family": "expose"}
+{"command": "kubectl cordon web-frontend-6c8d9", "label": "low_risk", "family": "cordon"}
+{"command": "kubectl logs billing-worker-x2k1 -f", "label": "no_note", "family": "logs"}
+{"command": "kubectl logs auth-api", "label": "no_note", "family": "logs"}
+{"command": "k rollout restart configmap/user-service", "label": "low_risk", "family": "rollout"}
+{"command": "kubectl label node auth-api team=platform", "label": "low_risk", "family": "label"}
+{"command": "kubectl apply -k ./overlays/staging", "label": "high_risk", "family": "apply"}
+{"command": "kubectl version -o=json", "label": "no_note", "family": "version"}
+{"command": "kubectl create ingress postgres-primary --image=nginx", "label": "low_risk", "family": "create"}
+{"command": "k annotate ingress postgres-primary owner=platform-team", "label": "low_risk", "family": "annotate"}
+{"command": "kubectl version --short", "label": "no_note", "family": "version"}
+{"command": "kubectl describe node/auth-api-7d9f4b", "label": "no_note", "family": "describe"}
+{"command": "kubectl logs auth-api -f", "label": "no_note", "family": "logs"}
+{"command": "kubectl scale pod/billing-worker-x2k1 --replicas=1 -n auth", "label": "high_risk", "family": "scale"}
+{"command": "kubectl version -o=json", "label": "no_note", "family": "version"}
+{"command": "k scale job user-service --replicas=5", "label": "high_risk", "family": "scale"}
+{"command": "k create ingress postgres-primary --image=nginx", "label": "low_risk", "family": "create"}
+{"command": "k version --client", "label": "no_note", "family": "version"}
+{"command": "kubectl delete secret auth-api-7d9f4b --grace-period=0 --force", "label": "high_risk", "family": "delete"}
+{"command": "kubectl delete service/web-frontend-6c8d9", "label": "high_risk", "family": "delete"}
+{"command": "kubectl create -f web-frontend-6c8d9.yaml", "label": "low_risk", "family": "create"}
+{"command": "k label node user-service team=platform", "label": "low_risk", "family": "label"}
+{"command": "k logs billing-worker-x2k1", "label": "no_note", "family": "logs"}
+{"command": "kubectl explain statefulset", "label": "low_risk", "family": "explain"}
+{"command": "k version -o=json", "label": "no_note", "family": "version"}
+{"command": "kubectl -n ghostkube version --client", "label": "no_note", "family": "version"}
+{"command": "kubectl annotate deployment auth-api-7d9f4b owner=platform-team", "label": "low_risk", "family": "annotate"}
+{"command": "k exec -it user-service -- /bin/bash", "label": "low_risk", "family": "exec"}
+{"command": "kubectl version --client", "label": "no_note", "family": "version"}
+{"command": "kubectl edit deployment user-service", "label": "low_risk", "family": "edit"}
+{"command": "k scale deployment billing-worker-x2k1 --replicas=5", "label": "high_risk", "family": "scale"}
+{"command": "kubectl -n default top nodes", "label": "low_risk", "family": "top"}
+{"command": "kubectl port-forward svc/checkout-worker 5432:5432", "label": "low_risk", "family": "port-forward"}
+{"command": "k edit deployment web-frontend-6c8d9", "label": "low_risk", "family": "edit"}
+{"command": "k delete job web-frontend-6c8d9 -n prod", "label": "high_risk", "family": "delete"}
+{"command": "kubectl port-forward auth-api 8080:80", "label": "low_risk", "family": "port-forward"}
+{"command": "k cp payment-gateway:/tmp/log.txt ./log.txt", "label": "low_risk", "family": "cp"}
+{"command": "kubectl -n prod rollout restart configmap/postgres-primary", "label": "low_risk", "family": "rollout"}
+{"command": "kubectl -n payments delete statefulset postgres-primary --grace-period=0 --force", "label": "high_risk", "family": "delete"}
+{"command": "kubectl describe secret postgres-primary", "label": "no_note", "family": "describe"}
+{"command": "kubectl port-forward svc/auth-api 5432:5432", "label": "low_risk", "family": "port-forward"}
+{"command": "kubectl -n prod delete secret checkout-worker", "label": "high_risk", "family": "delete"}
+{"command": "kubectl apply -f payment-gateway.yaml", "label": "high_risk", "family": "apply"}
+{"command": "k delete node checkout-worker -n ghostkube", "label": "high_risk", "family": "delete"}
+{"command": "k expose deployment payment-gateway --port=80 --target-port=8080", "label": "low_risk", "family": "expose"}
+{"command": "kubectl -n staging version --short", "label": "no_note", "family": "version"}
+{"command": "k annotate ingress billing-worker-x2k1 owner=platform-team", "label": "low_risk", "family": "annotate"}
+{"command": "kubectl logs redis-cache -n auth", "label": "no_note", "family": "logs"}
+{"command": "kubectl delete statefulset redis-cache --grace-period=0 --force", "label": "high_risk", "family": "delete"}
+{"command": "kubectl exec -it user-service -- /bin/bash", "label": "low_risk", "family": "exec"}
+{"command": "k delete daemonset/auth-api", "label": "high_risk", "family": "delete"}
+{"command": "kubectl drain user-service --ignore-daemonsets", "label": "high_risk", "family": "drain"}
+{"command": "kubectl -n payments exec notification-svc -n ghostkube -- env", "label": "low_risk", "family": "exec"}
+{"command": "k expose statefulset notification-svc --port=80 --target-port=8080", "label": "low_risk", "family": "expose"}
+{"command": "kubectl describe service user-service -n ghostkube", "label": "no_note", "family": "describe"}
+{"command": "k apply -k ./overlays/ghostkube", "label": "high_risk", "family": "apply"}
+{"command": "k get secret --all-namespaces", "label": "no_note", "family": "get"}
+{"command": "k cp web-frontend-6c8d9:/tmp/log.txt ./log.txt", "label": "low_risk", "family": "cp"}
+{"command": "k describe job auth-api -n ghostkube", "label": "no_note", "family": "describe"}
+{"command": "kubectl rollout undo pod/web-frontend-6c8d9", "label": "low_risk", "family": "rollout"}
+{"command": "kubectl edit ingress/postgres-primary -n auth", "label": "low_risk", "family": "edit"}
+{"command": "kubectl get statefulset redis-cache", "label": "no_note", "family": "get"}
+{"command": "kubectl scale deployment redis-cache --replicas=5", "label": "high_risk", "family": "scale"}
+{"command": "kubectl label deployment payment-gateway team=platform", "label": "low_risk", "family": "label"}
+{"command": "kubectl logs billing-worker-x2k1", "label": "no_note", "family": "logs"}
+{"command": "kubectl -n ghostkube edit deployment user-service", "label": "low_risk", "family": "edit"}
+{"command": "k describe node/auth-api-7d9f4b", "label": "no_note", "family": "describe"}
+{"command": "kubectl apply -f auth-api-7d9f4b.yaml -n ghostkube", "label": "high_risk", "family": "apply"}
+{"command": "kubectl apply -f auth-api-7d9f4b.yaml", "label": "high_risk", "family": "apply"}
+{"command": "kubectl uncordon checkout-worker", "label": "low_risk", "family": "uncordon"}
+{"command": "k scale job billing-worker-x2k1 --replicas=5", "label": "high_risk", "family": "scale"}
+{"command": "kubectl port-forward svc/postgres-primary 5432:5432", "label": "low_risk", "family": "port-forward"}
+{"command": "k explain pvc", "label": "low_risk", "family": "explain"}
+{"command": "k top nodes", "label": "low_risk", "family": "top"}
+{"command": "k get deployment billing-worker-x2k1", "label": "no_note", "family": "get"}
+{"command": "kubectl logs auth-api-7d9f4b -n default", "label": "no_note", "family": "logs"}
+{"command": "kubectl rollout undo pod/postgres-primary", "label": "low_risk", "family": "rollout"}
+{"command": "kubectl drain auth-api-7d9f4b --ignore-daemonsets --delete-emptydir-data", "label": "high_risk", "family": "drain"}
+{"command": "kubectl delete job web-frontend-6c8d9 -n prod", "label": "high_risk", "family": "delete"}
+{"command": "kubectl -n prod explain pvc", "label": "low_risk", "family": "explain"}
+{"command": "kubectl version -o=json", "label": "no_note", "family": "version"}
+{"command": "kubectl apply -f postgres-primary.yaml", "label": "high_risk", "family": "apply"}
+{"command": "k cluster-info dump", "label": "no_note", "family": "cluster-info"}
+{"command": "k top pods", "label": "low_risk", "family": "top"}
+{"command": "k logs billing-worker-x2k1 --previous", "label": "no_note", "family": "logs"}
+{"command": "kubectl rollout restart cronjob/checkout-worker", "label": "low_risk", "family": "rollout"}
+{"command": "kubectl scale cronjob auth-api --replicas=0", "label": "high_risk", "family": "scale"}
+{"command": "kubectl describe cronjob web-frontend-6c8d9", "label": "no_note", "family": "describe"}
+{"command": "k version -o=json", "label": "no_note", "family": "version"}
+{"command": "kubectl -n staging uncordon web-frontend-6c8d9", "label": "low_risk", "family": "uncordon"}
+{"command": "k scale node payment-gateway --replicas=0", "label": "high_risk", "family": "scale"}
+{"command": "k rollout status ingress/auth-api", "label": "low_risk", "family": "rollout"}
+{"command": "k cp notification-svc:/tmp/log.txt ./log.txt", "label": "low_risk", "family": "cp"}
+{"command": "k edit ingress/checkout-worker -n ghostkube", "label": "low_risk", "family": "edit"}
+{"command": "kubectl top pods", "label": "low_risk", "family": "top"}
+{"command": "k get statefulset redis-cache", "label": "no_note", "family": "get"}
+{"command": "kubectl run payment-gateway --image=busybox --restart=Never", "label": "low_risk", "family": "run"}
+{"command": "k run checkout-worker --image=busybox --restart=Never", "label": "low_risk", "family": "run"}
+{"command": "k drain redis-cache --force", "label": "high_risk", "family": "drain"}
+{"command": "k port-forward auth-api 8080:80", "label": "low_risk", "family": "port-forward"}
+{"command": "kubectl wait pod/web-frontend-6c8d9 --for=condition=Ready", "label": "low_risk", "family": "wait"}
+{"command": "kubectl edit pvc auth-api", "label": "low_risk", "family": "edit"}
+{"command": "k label deployment user-service team=platform", "label": "low_risk", "family": "label"}
+{"command": "k label pvc auth-api-7d9f4b tier=backend --overwrite", "label": "low_risk", "family": "label"}
+{"command": "k delete secret notification-svc --grace-period=0 --force", "label": "high_risk", "family": "delete"}
+{"command": "k diff -f billing-worker-x2k1.yaml", "label": "low_risk", "family": "diff"}
+{"command": "kubectl delete node checkout-worker -n ghostkube", "label": "high_risk", "family": "delete"}
+{"command": "kubectl rollout undo job/notification-svc", "label": "low_risk", "family": "rollout"}
+{"command": "kubectl drain redis-cache --ignore-daemonsets --delete-emptydir-data", "label": "high_risk", "family": "drain"}
+{"command": "kubectl -n staging create ingress payment-gateway --image=nginx", "label": "low_risk", "family": "create"}
+{"command": "kubectl cordon checkout-worker", "label": "low_risk", "family": "cordon"}
+{"command": "k rollout undo pod/web-frontend-6c8d9", "label": "low_risk", "family": "rollout"}
+{"command": "kubectl apply -f billing-worker-x2k1.yaml -n prod", "label": "high_risk", "family": "apply"}
+{"command": "k label pvc checkout-worker tier=backend --overwrite", "label": "low_risk", "family": "label"}
+{"command": "kubectl describe secret redis-cache", "label": "no_note", "family": "describe"}
+{"command": "k logs auth-api", "label": "no_note", "family": "logs"}
+{"command": "k drain user-service --ignore-daemonsets", "label": "high_risk", "family": "drain"}
+{"command": "kubectl get pod -o wide", "label": "no_note", "family": "get"}
+{"command": "kubectl -n default describe service/payment-gateway", "label": "no_note", "family": "describe"}
+{"command": "kubectl edit ingress/checkout-worker -n ghostkube", "label": "low_risk", "family": "edit"}
+{"command": "kubectl rollout status ingress/notification-svc", "label": "low_risk", "family": "rollout"}
+{"command": "k drain payment-gateway --force", "label": "high_risk", "family": "drain"}
+{"command": "kubectl get secret --all-namespaces", "label": "no_note", "family": "get"}
+{"command": "k delete secret checkout-worker", "label": "high_risk", "family": "delete"}
+{"command": "k replace -f payment-gateway.yaml", "label": "low_risk", "family": "replace"}
+{"command": "kubectl rollout restart configmap/user-service", "label": "low_risk", "family": "rollout"}
+{"command": "k uncordon web-frontend-6c8d9", "label": "low_risk", "family": "uncordon"}
+{"command": "k get statefulset web-frontend-6c8d9", "label": "no_note", "family": "get"}
+{"command": "k apply -k ./overlays/default", "label": "high_risk", "family": "apply"}
+{"command": "kubectl run postgres-primary --image=busybox --restart=Never", "label": "low_risk", "family": "run"}
+{"command": "k patch secret postgres-primary --type=merge -p patch.json", "label": "low_risk", "family": "patch"}
+{"command": "k edit cronjob/redis-cache -n default", "label": "low_risk", "family": "edit"}
+{"command": "kubectl label job checkout-worker tier=backend --overwrite", "label": "low_risk", "family": "label"}
+{"command": "k describe job auth-api-7d9f4b -n payments", "label": "no_note", "family": "describe"}
+{"command": "kubectl -n staging patch job redis-cache --type=merge -p patch.json", "label": "low_risk", "family": "patch"}
+{"command": "kubectl expose statefulset auth-api --port=80 --target-port=8080", "label": "low_risk", "family": "expose"}
+{"command": "kubectl label pvc auth-api-7d9f4b tier=backend --overwrite", "label": "low_risk", "family": "label"}
+{"command": "k get secret --all-namespaces", "label": "no_note", "family": "get"}
+{"command": "k rollout restart configmap/postgres-primary", "label": "low_risk", "family": "rollout"}
+{"command": "k top pods", "label": "low_risk", "family": "top"}
+{"command": "kubectl get pod -o wide", "label": "no_note", "family": "get"}
+{"command": "k uncordon checkout-worker", "label": "low_risk", "family": "uncordon"}
+{"command": "kubectl annotate ingress billing-worker-x2k1 owner=platform-team", "label": "low_risk", "family": "annotate"}
+{"command": "k drain postgres-primary --ignore-daemonsets", "label": "high_risk", "family": "drain"}
+{"command": "k apply -f auth-api-7d9f4b.yaml -n ghostkube", "label": "high_risk", "family": "apply"}
+{"command": "kubectl describe node/auth-api", "label": "no_note", "family": "describe"}
+{"command": "k cluster-info dump", "label": "no_note", "family": "cluster-info"}
+{"command": "k create ingress payment-gateway --image=nginx", "label": "low_risk", "family": "create"}
+{"command": "k scale pod/checkout-worker --replicas=1 -n auth", "label": "high_risk", "family": "scale"}
+{"command": "kubectl logs user-service -f", "label": "no_note", "family": "logs"}
+{"command": "kubectl logs user-service -f", "label": "no_note", "family": "logs"}
+{"command": "kubectl get secret --all-namespaces", "label": "no_note", "family": "get"}
+{"command": "k exec notification-svc -n ghostkube -- env", "label": "low_risk", "family": "exec"}
+{"command": "kubectl uncordon user-service", "label": "low_risk", "family": "uncordon"}
+{"command": "kubectl -n default edit cronjob/payment-gateway -n ghostkube", "label": "low_risk", "family": "edit"}
+{"command": "k rollout status ingress/notification-svc", "label": "low_risk", "family": "rollout"}
+{"command": "k exec -it postgres-primary -- /bin/bash", "label": "low_risk", "family": "exec"}
+{"command": "k patch job auth-api-7d9f4b --type=merge -p patch.json", "label": "low_risk", "family": "patch"}
+{"command": "kubectl rollout restart cronjob/postgres-primary", "label": "low_risk", "family": "rollout"}
+{"command": "k diff -f web-frontend-6c8d9.yaml", "label": "low_risk", "family": "diff"}
+{"command": "k run postgres-primary --image=busybox --restart=Never", "label": "low_risk", "family": "run"}
+{"command": "k drain billing-worker-x2k1 --force", "label": "high_risk", "family": "drain"}
+{"command": "k rollout status cronjob/checkout-worker", "label": "low_risk", "family": "rollout"}
+{"command": "k get pod --all-namespaces", "label": "no_note", "family": "get"}
+{"command": "kubectl version --short", "label": "no_note", "family": "version"}
+{"command": "kubectl version --client", "label": "no_note", "family": "version"}
+{"command": "kubectl rollout status cronjob/billing-worker-x2k1", "label": "low_risk", "family": "rollout"}
+{"command": "k scale cronjob auth-api --replicas=0", "label": "high_risk", "family": "scale"}
+{"command": "kubectl expose deployment checkout-worker --port=80 --target-port=8080", "label": "low_risk", "family": "expose"}
+{"command": "k logs user-service -f", "label": "no_note", "family": "logs"}
+{"command": "k delete service/web-frontend-6c8d9", "label": "high_risk", "family": "delete"}
+{"command": "kubectl delete statefulset postgres-primary --grace-period=0 --force", "label": "high_risk", "family": "delete"}
+{"command": "kubectl delete daemonset/auth-api", "label": "high_risk", "family": "delete"}
+{"command": "kubectl drain payment-gateway --force", "label": "high_risk", "family": "drain"}
+{"command": "k port-forward user-service 8080:80", "label": "low_risk", "family": "port-forward"}
+{"command": "kubectl get ingress", "label": "no_note", "family": "get"}
+{"command": "k get ingress", "label": "no_note", "family": "get"}
+{"command": "kubectl get pod --all-namespaces", "label": "no_note", "family": "get"}
+{"command": "kubectl create -f postgres-primary.yaml", "label": "low_risk", "family": "create"}
+{"command": "k drain auth-api-7d9f4b --ignore-daemonsets --delete-emptydir-data", "label": "high_risk", "family": "drain"}
+{"command": "kubectl get cronjob -n payments", "label": "no_note", "family": "get"}
+{"command": "k cordon web-frontend-6c8d9", "label": "low_risk", "family": "cordon"}
+{"command": "kubectl label pvc checkout-worker tier=backend --overwrite", "label": "low_risk", "family": "label"}
+{"command": "kubectl exec -it postgres-primary -- /bin/bash", "label": "low_risk", "family": "exec"}
+{"command": "k port-forward svc/postgres-primary 5432:5432", "label": "low_risk", "family": "port-forward"}
+{"command": "kubectl delete secret notification-svc --grace-period=0 --force", "label": "high_risk", "family": "delete"}
+{"command": "k logs checkout-worker", "label": "no_note", "family": "logs"}
+{"command": "kubectl scale job user-service --replicas=5", "label": "high_risk", "family": "scale"}
+{"command": "k replace -f auth-api-7d9f4b.yaml", "label": "low_risk", "family": "replace"}
+{"command": "k get pod -n default", "label": "no_note", "family": "get"}
+{"command": "kubectl scale node payment-gateway --replicas=0", "label": "high_risk", "family": "scale"}
+{"command": "k cluster-info dump", "label": "no_note", "family": "cluster-info"}
+{"command": "kubectl -n auth drain auth-api-7d9f4b --ignore-daemonsets --delete-emptydir-data", "label": "high_risk", "family": "drain"}
+{"command": "kubectl -n default uncordon payment-gateway", "label": "low_risk", "family": "uncordon"}
+{"command": "kubectl apply -f notification-svc.yaml", "label": "high_risk", "family": "apply"}
+{"command": "kubectl replace -f postgres-primary.yaml", "label": "low_risk", "family": "replace"}
+{"command": "kubectl diff -f checkout-worker.yaml", "label": "low_risk", "family": "diff"}
+{"command": "kubectl label job redis-cache tier=backend --overwrite", "label": "low_risk", "family": "label"}
+{"command": "kubectl scale job billing-worker-x2k1 --replicas=5", "label": "high_risk", "family": "scale"}
+{"command": "kubectl -n staging scale cronjob notification-svc --replicas=0", "label": "high_risk", "family": "scale"}
+{"command": "k wait pod/billing-worker-x2k1 --for=condition=Ready", "label": "low_risk", "family": "wait"}
+{"command": "kubectl scale cronjob notification-svc --replicas=0", "label": "high_risk", "family": "scale"}
+{"command": "kubectl rollout undo job/postgres-primary", "label": "low_risk", "family": "rollout"}
+{"command": "kubectl cordon web-frontend-6c8d9", "label": "low_risk", "family": "cordon"}
+{"command": "k explain statefulset", "label": "low_risk", "family": "explain"}
+{"command": "k get cronjob -n staging", "label": "no_note", "family": "get"}
+{"command": "kubectl -n ghostkube scale pod/billing-worker-x2k1 --replicas=1 -n auth", "label": "high_risk", "family": "scale"}
+{"command": "k describe service billing-worker-x2k1 -n ghostkube", "label": "no_note", "family": "describe"}
+{"command": "kubectl delete node payment-gateway", "label": "high_risk", "family": "delete"}
+{"command": "kubectl delete node billing-worker-x2k1 -n ghostkube", "label": "high_risk", "family": "delete"}
+{"command": "k annotate deployment web-frontend-6c8d9 owner=platform-team", "label": "low_risk", "family": "annotate"}
+{"command": "kubectl cp web-frontend-6c8d9:/tmp/log.txt ./log.txt", "label": "low_risk", "family": "cp"}
+{"command": "k drain notification-svc --ignore-daemonsets", "label": "high_risk", "family": "drain"}
+{"command": "k rollout undo job/notification-svc", "label": "low_risk", "family": "rollout"}
+{"command": "k rollout undo pod/postgres-primary", "label": "low_risk", "family": "rollout"}
+{"command": "kubectl edit cronjob/redis-cache -n default", "label": "low_risk", "family": "edit"}
+{"command": "k logs auth-api -f", "label": "no_note", "family": "logs"}
+{"command": "k wait service/user-service --for=condition=Ready", "label": "low_risk", "family": "wait"}
+{"command": "kubectl cluster-info dump", "label": "no_note", "family": "cluster-info"}
+{"command": "k exec -it postgres-primary -- /bin/bash", "label": "low_risk", "family": "exec"}
+{"command": "kubectl version --short", "label": "no_note", "family": "version"}
+{"command": "k top nodes", "label": "low_risk", "family": "top"}
+{"command": "k apply -f notification-svc.yaml", "label": "high_risk", "family": "apply"}
+{"command": "kubectl version -o=json", "label": "no_note", "family": "version"}
+{"command": "kubectl edit pvc checkout-worker", "label": "low_risk", "family": "edit"}
+{"command": "k apply -k ./overlays/ghostkube", "label": "high_risk", "family": "apply"}
+{"command": "kubectl -n prod edit pvc auth-api", "label": "low_risk", "family": "edit"}
+{"command": "kubectl apply -k ./overlays/default", "label": "high_risk", "family": "apply"}
+{"command": "kubectl describe job auth-api -n ghostkube", "label": "no_note", "family": "describe"}
+{"command": "kubectl get service -o wide", "label": "no_note", "family": "get"}
+{"command": "kubectl cp notification-svc:/tmp/log.txt ./log.txt", "label": "low_risk", "family": "cp"}
+{"command": "k top pods", "label": "low_risk", "family": "top"}
+{"command": "k edit cronjob/payment-gateway -n ghostkube", "label": "low_risk", "family": "edit"}
+{"command": "kubectl scale deployment billing-worker-x2k1 --replicas=5", "label": "high_risk", "family": "scale"}
+{"command": "k uncordon user-service", "label": "low_risk", "family": "uncordon"}
+{"command": "k port-forward payment-gateway 8080:80", "label": "low_risk", "family": "port-forward"}
+{"command": "k cordon web-frontend-6c8d9", "label": "low_risk", "family": "cordon"}
+{"command": "kubectl -n prod get statefulset redis-cache", "label": "no_note", "family": "get"}
+{"command": "kubectl delete daemonset/user-service", "label": "high_risk", "family": "delete"}
+{"command": "k version --short", "label": "no_note", "family": "version"}
+{"command": "k top pods", "label": "low_risk", "family": "top"}
+{"command": "k version --short", "label": "no_note", "family": "version"}
+{"command": "k create service user-service --image=nginx", "label": "low_risk", "family": "create"}
+{"command": "kubectl cordon billing-worker-x2k1", "label": "low_risk", "family": "cordon"}
+{"command": "kubectl delete secret checkout-worker", "label": "high_risk", "family": "delete"}
+{"command": "k label job redis-cache tier=backend --overwrite", "label": "low_risk", "family": "label"}
+{"command": "kubectl explain pvc", "label": "low_risk", "family": "explain"}
+{"command": "kubectl get daemonset", "label": "no_note", "family": "get"}
+{"command": "kubectl run redis-cache --image=busybox --restart=Never", "label": "low_risk", "family": "run"}
+{"command": "kubectl replace -f auth-api.yaml", "label": "low_risk", "family": "replace"}
+{"command": "kubectl create -f billing-worker-x2k1.yaml", "label": "low_risk", "family": "create"}
+{"command": "kubectl apply -k ./overlays/ghostkube", "label": "high_risk", "family": "apply"}
+{"command": "k get pod -n payments", "label": "no_note", "family": "get"}
+{"command": "kubectl patch job redis-cache --type=merge -p patch.json", "label": "low_risk", "family": "patch"}
+{"command": "k apply -f web-frontend-6c8d9.yaml -n ghostkube", "label": "high_risk", "family": "apply"}
+{"command": "kubectl wait pod/billing-worker-x2k1 --for=condition=Ready", "label": "low_risk", "family": "wait"}
+{"command": "k create -f web-frontend-6c8d9.yaml", "label": "low_risk", "family": "create"}
+{"command": "k rollout restart cronjob/checkout-worker", "label": "low_risk", "family": "rollout"}
+{"command": "k drain user-service", "label": "high_risk", "family": "drain"}
+{"command": "k edit deployment user-service", "label": "low_risk", "family": "edit"}
+{"command": "k drain auth-api-7d9f4b", "label": "high_risk", "family": "drain"}
+{"command": "kubectl get pod --all-namespaces", "label": "no_note", "family": "get"}
+{"command": "kubectl get pod -n default", "label": "no_note", "family": "get"}
+{"command": "kubectl -n payments rollout status ingress/auth-api", "label": "low_risk", "family": "rollout"}
+{"command": "kubectl delete node checkout-worker", "label": "high_risk", "family": "delete"}
+{"command": "kubectl create service auth-api --image=nginx", "label": "low_risk", "family": "create"}
+{"command": "k logs auth-api-7d9f4b -n default", "label": "no_note", "family": "logs"}
+{"command": "k rollout restart cronjob/postgres-primary", "label": "low_risk", "family": "rollout"}
+{"command": "k delete statefulset redis-cache --grace-period=0 --force", "label": "high_risk", "family": "delete"}
+{"command": "kubectl annotate ingress postgres-primary owner=platform-team", "label": "low_risk", "family": "annotate"}
+{"command": "k cp auth-api:/tmp/log.txt ./log.txt", "label": "low_risk", "family": "cp"}
+{"command": "k version --client", "label": "no_note", "family": "version"}
+{"command": "kubectl describe service/payment-gateway", "label": "no_note", "family": "describe"}
+{"command": "k get service -o wide", "label": "no_note", "family": "get"}
+{"command": "kubectl version --client", "label": "no_note", "family": "version"}
+{"command": "kubectl apply -f web-frontend-6c8d9.yaml -n ghostkube", "label": "high_risk", "family": "apply"}
+{"command": "kubectl label deployment user-service team=platform", "label": "low_risk", "family": "label"}
+{"command": "kubectl drain postgres-primary --ignore-daemonsets", "label": "high_risk", "family": "drain"}
+{"command": "k delete service/notification-svc", "label": "high_risk", "family": "delete"}
+{"command": "k describe secret redis-cache", "label": "no_note", "family": "describe"}
+{"command": "kubectl -n staging scale deployment billing-worker-x2k1 --replicas=5", "label": "high_risk", "family": "scale"}
+{"command": "kubectl uncordon web-frontend-6c8d9", "label": "low_risk", "family": "uncordon"}
+{"command": "k get cronjob -n payments", "label": "no_note", "family": "get"}
+{"command": "kubectl describe cronjob redis-cache", "label": "no_note", "family": "describe"}
+{"command": "k label deployment payment-gateway team=platform", "label": "low_risk", "family": "label"}
+{"command": "k edit pvc checkout-worker", "label": "low_risk", "family": "edit"}
+{"command": "kubectl annotate deployment web-frontend-6c8d9 owner=platform-team", "label": "low_risk", "family": "annotate"}
+{"command": "kubectl -n ghostkube exec postgres-primary -n payments -- env", "label": "low_risk", "family": "exec"}
+{"command": "k apply -f payment-gateway.yaml", "label": "high_risk", "family": "apply"}
+{"command": "k port-forward svc/auth-api 5432:5432", "label": "low_risk", "family": "port-forward"}
+{"command": "k exec user-service -n ghostkube -- env", "label": "low_risk", "family": "exec"}
+{"command": "k top nodes", "label": "low_risk", "family": "top"}
+{"command": "kubectl diff -f billing-worker-x2k1.yaml", "label": "low_risk", "family": "diff"}
+{"command": "k replace -f auth-api.yaml", "label": "low_risk", "family": "replace"}
+{"command": "k delete secret auth-api-7d9f4b --grace-period=0 --force", "label": "high_risk", "family": "delete"}
+{"command": "k run payment-gateway --image=busybox --restart=Never", "label": "low_risk", "family": "run"}
+{"command": "k drain postgres-primary", "label": "high_risk", "family": "drain"}
+{"command": "kubectl -n ghostkube uncordon checkout-worker", "label": "low_risk", "family": "uncordon"}
+{"command": "k drain auth-api-7d9f4b --ignore-daemonsets --delete-emptydir-data", "label": "high_risk", "family": "drain"}
+{"command": "k cordon checkout-worker", "label": "low_risk", "family": "cordon"}
+{"command": "k diff -f redis-cache.yaml", "label": "low_risk", "family": "diff"}
+{"command": "k get pod --all-namespaces", "label": "no_note", "family": "get"}
+{"command": "kubectl patch secret postgres-primary --type=merge -p patch.json", "label": "low_risk", "family": "patch"}
+{"command": "kubectl delete job auth-api-7d9f4b -n staging", "label": "high_risk", "family": "delete"}
+{"command": "k exec postgres-primary -n payments -- env", "label": "low_risk", "family": "exec"}
+{"command": "k version --short", "label": "no_note", "family": "version"}
+{"command": "k delete node billing-worker-x2k1 -n ghostkube", "label": "high_risk", "family": "delete"}
+{"command": "k expose statefulset auth-api --port=80 --target-port=8080", "label": "low_risk", "family": "expose"}
+{"command": "kubectl replace -f auth-api-7d9f4b.yaml", "label": "low_risk", "family": "replace"}
+{"command": "k cordon billing-worker-x2k1", "label": "low_risk", "family": "cordon"}
+{"command": "kubectl drain user-service --force", "label": "high_risk", "family": "drain"}
+{"command": "k run redis-cache --image=busybox --restart=Never", "label": "low_risk", "family": "run"}
+{"command": "k create -f postgres-primary.yaml", "label": "low_risk", "family": "create"}
+{"command": "k version --client", "label": "no_note", "family": "version"}
+{"command": "kubectl edit deployment web-frontend-6c8d9", "label": "low_risk", "family": "edit"}
+{"command": "kubectl -n ghostkube rollout status cronjob/billing-worker-x2k1", "label": "low_risk", "family": "rollout"}
+{"command": "k describe service user-service -n ghostkube", "label": "no_note", "family": "describe"}
+{"command": "k apply -f postgres-primary.yaml", "label": "high_risk", "family": "apply"}
+{"command": "k version --short", "label": "no_note", "family": "version"}
+{"command": "kubectl apply -f notification-svc.yaml -n ghostkube", "label": "high_risk", "family": "apply"}
+{"command": "kubectl scale pod/checkout-worker --replicas=1 -n auth", "label": "high_risk", "family": "scale"}
+{"command": "k get ingress", "label": "no_note", "family": "get"}
+{"command": "kubectl top nodes", "label": "low_risk", "family": "top"}
+{"command": "kubectl drain user-service --ignore-daemonsets --delete-emptydir-data", "label": "high_risk", "family": "drain"}
+{"command": "k delete node payment-gateway", "label": "high_risk", "family": "delete"}
+{"command": "k delete secret auth-api-7d9f4b", "label": "high_risk", "family": "delete"}
+{"command": "k drain web-frontend-6c8d9", "label": "high_risk", "family": "drain"}
+{"command": "kubectl get daemonset", "label": "no_note", "family": "get"}
+{"command": "kubectl -n auth exec -it user-service -- /bin/bash", "label": "low_risk", "family": "exec"}
+{"command": "k uncordon payment-gateway", "label": "low_risk", "family": "uncordon"}
+{"command": "k delete daemonset/user-service", "label": "high_risk", "family": "delete"}
+{"command": "kubectl drain auth-api-7d9f4b --ignore-daemonsets --delete-emptydir-data", "label": "high_risk", "family": "drain"}
+{"command": "k annotate deployment auth-api-7d9f4b owner=platform-team", "label": "low_risk", "family": "annotate"}
+{"command": "kubectl describe service/auth-api", "label": "no_note", "family": "describe"}
+{"command": "kubectl explain statefulset", "label": "low_risk", "family": "explain"}
+{"command": "k version -o=json", "label": "no_note", "family": "version"}
+{"command": "k logs billing-worker-x2k1 -f", "label": "no_note", "family": "logs"}
+{"command": "kubectl patch job auth-api-7d9f4b --type=merge -p patch.json", "label": "low_risk", "family": "patch"}
+{"command": "kubectl scale daemonset/auth-api-7d9f4b --replicas=1 -n ghostkube", "label": "high_risk", "family": "scale"}
+{"command": "k drain auth-api --ignore-daemonsets", "label": "high_risk", "family": "drain"}
+{"command": "kubectl cluster-info dump", "label": "no_note", "family": "cluster-info"}
+{"command": "kubectl delete service/notification-svc", "label": "high_risk", "family": "delete"}
+{"command": "kubectl port-forward svc/billing-worker-x2k1 5432:5432", "label": "low_risk", "family": "port-forward"}
+{"command": "kubectl replace -f payment-gateway.yaml", "label": "low_risk", "family": "replace"}
+{"command": "kubectl diff -f web-frontend-6c8d9.yaml", "label": "low_risk", "family": "diff"}
+{"command": "kubectl get deployment auth-api-7d9f4b", "label": "no_note", "family": "get"}
+{"command": "kubectl exec -it auth-api -- /bin/bash", "label": "low_risk", "family": "exec"}
+{"command": "kubectl get ingress", "label": "no_note", "family": "get"}
+{"command": "k scale node postgres-primary --replicas=0", "label": "high_risk", "family": "scale"}
+{"command": "kubectl drain auth-api --ignore-daemonsets", "label": "high_risk", "family": "drain"}
+{"command": "k diff -f checkout-worker.yaml", "label": "low_risk", "family": "diff"}
+{"command": "k delete statefulset postgres-primary --grace-period=0 --force", "label": "high_risk", "family": "delete"}
+{"command": "k scale daemonset/web-frontend-6c8d9 --replicas=1 -n staging", "label": "high_risk", "family": "scale"}
+{"command": "kubectl get deployment billing-worker-x2k1", "label": "no_note", "family": "get"}
+{"command": "kubectl describe job auth-api-7d9f4b -n payments", "label": "no_note", "family": "describe"}
+{"command": "k get pod -o wide", "label": "no_note", "family": "get"}
+{"command": "kubectl exec notification-svc -n ghostkube -- env", "label": "low_risk", "family": "exec"}
+{"command": "kubectl logs postgres-primary", "label": "no_note", "family": "logs"}
+{"command": "kubectl scale daemonset/web-frontend-6c8d9 --replicas=1 -n staging", "label": "high_risk", "family": "scale"}
+{"command": "kubectl get pod -n payments", "label": "no_note", "family": "get"}
+{"command": "kubectl create ingress payment-gateway --image=nginx", "label": "low_risk", "family": "create"}
+{"command": "k explain statefulset", "label": "low_risk", "family": "explain"}
+{"command": "kubectl top pods", "label": "low_risk", "family": "top"}
+{"command": "k expose deployment checkout-worker --port=80 --target-port=8080", "label": "low_risk", "family": "expose"}
+{"command": "kubectl delete secret auth-api-7d9f4b", "label": "high_risk", "family": "delete"}
+{"command": "kubectl -n prod version --client", "label": "no_note", "family": "version"}
+{"command": "kubectl port-forward payment-gateway 8080:80", "label": "low_risk", "family": "port-forward"}
+{"command": "kubectl version --short", "label": "no_note", "family": "version"}
+{"command": "kubectl get cronjob -n staging", "label": "no_note", "family": "get"}
+{"command": "kubectl drain postgres-primary", "label": "high_risk", "family": "drain"}
+{"command": "kubectl patch secret auth-api --type=merge -p patch.json", "label": "low_risk", "family": "patch"}
+{"command": "k logs redis-cache -n auth", "label": "no_note", "family": "logs"}
+{"command": "kubectl label node user-service team=platform", "label": "low_risk", "family": "label"}
+{"command": "k create -f billing-worker-x2k1.yaml", "label": "low_risk", "family": "create"}
+{"command": "kubectl exec postgres-primary -n payments -- env", "label": "low_risk", "family": "exec"}
+{"command": "kubectl cluster-info dump", "label": "no_note", "family": "cluster-info"}
+{"command": "kubectl logs checkout-worker --previous", "label": "no_note", "family": "logs"}
+{"command": "k logs payment-gateway -n prod", "label": "no_note", "family": "logs"}
+{"command": "k label job checkout-worker tier=backend --overwrite", "label": "low_risk", "family": "label"}
+{"command": "kubectl exec user-service -n ghostkube -- env", "label": "low_risk", "family": "exec"}
+{"command": "kubectl run checkout-worker --image=busybox --restart=Never", "label": "low_risk", "family": "run"}
+{"command": "kubectl top nodes", "label": "low_risk", "family": "top"}
+{"command": "k port-forward svc/checkout-worker 5432:5432", "label": "low_risk", "family": "port-forward"}
+{"command": "kubectl rollout restart configmap/postgres-primary", "label": "low_risk", "family": "rollout"}
+{"command": "kubectl top nodes", "label": "low_risk", "family": "top"}
+{"command": "kubectl create service user-service --image=nginx", "label": "low_risk", "family": "create"}
+{"command": "k rollout status cronjob/billing-worker-x2k1", "label": "low_risk", "family": "rollout"}
+{"command": "kubectl logs redis-cache -n staging", "label": "no_note", "family": "logs"}
+{"command": "kubectl cp payment-gateway:/tmp/log.txt ./log.txt", "label": "low_risk", "family": "cp"}
+{"command": "k apply -f billing-worker-x2k1.yaml -n prod", "label": "high_risk", "family": "apply"}
+{"command": "k exec -it auth-api -- /bin/bash", "label": "low_risk", "family": "exec"}
+{"command": "k drain user-service --ignore-daemonsets --delete-emptydir-data", "label": "high_risk", "family": "drain"}
+{"command": "k scale deployment redis-cache --replicas=5", "label": "high_risk", "family": "scale"}
+{"command": "kubectl expose statefulset notification-svc --port=80 --target-port=8080", "label": "low_risk", "family": "expose"}
+{"command": "k create -f postgres-primary.yaml", "label": "low_risk", "family": "create"}
+{"command": "k label node auth-api team=platform", "label": "low_risk", "family": "label"}
+{"command": "k logs payment-gateway --previous", "label": "no_note", "family": "logs"}
+{"command": "k patch job redis-cache --type=merge -p patch.json", "label": "low_risk", "family": "patch"}
+{"command": "k wait service/auth-api-7d9f4b --for=condition=Ready", "label": "low_risk", "family": "wait"}
+{"command": "k describe node/auth-api", "label": "no_note", "family": "describe"}
+{"command": "kubectl wait service/auth-api-7d9f4b --for=condition=Ready", "label": "low_risk", "family": "wait"}
+{"command": "kubectl rollout status cronjob/checkout-worker", "label": "low_risk", "family": "rollout"}
+{"command": "k delete node checkout-worker", "label": "high_risk", "family": "delete"}
+{"command": "kubectl rollout status ingress/auth-api", "label": "low_risk", "family": "rollout"}
+{"command": "k port-forward svc/billing-worker-x2k1 5432:5432", "label": "low_risk", "family": "port-forward"}
+{"command": "kubectl explain pvc", "label": "low_risk", "family": "explain"}
+{"command": "k describe service/auth-api", "label": "no_note", "family": "describe"}
+{"command": "kubectl diff -f redis-cache.yaml", "label": "low_risk", "family": "diff"}
+{"command": "kubectl scale node postgres-primary --replicas=0", "label": "high_risk", "family": "scale"}
+{"command": "k edit pvc auth-api", "label": "low_risk", "family": "edit"}
+{"command": "k top nodes", "label": "low_risk", "family": "top"}
+{"command": "kubectl -n auth edit deployment web-frontend-6c8d9", "label": "low_risk", "family": "edit"}
+{"command": "k cluster-info dump", "label": "no_note", "family": "cluster-info"}
+{"command": "k logs postgres-primary", "label": "no_note", "family": "logs"}
+{"command": "k port-forward auth-api 8080:80", "label": "low_risk", "family": "port-forward"}
+{"command": "kubectl -n ghostkube annotate deployment web-frontend-6c8d9 owner=platform-team", "label": "low_risk", "family": "annotate"}
+{"command": "k get service -o wide", "label": "no_note", "family": "get"}
+{"command": "k get deployment auth-api-7d9f4b", "label": "no_note", "family": "get"}
+{"command": "k scale daemonset/auth-api-7d9f4b --replicas=1 -n ghostkube", "label": "high_risk", "family": "scale"}
+{"command": "k create service auth-api --image=nginx", "label": "low_risk", "family": "create"}
+{"command": "kubectl logs payment-gateway --previous", "label": "no_note", "family": "logs"}
+{"command": "k patch secret auth-api --type=merge -p patch.json", "label": "low_risk", "family": "patch"}
+{"command": "kubectl logs checkout-worker", "label": "no_note", "family": "logs"}
+{"command": "kubectl drain auth-api-7d9f4b", "label": "high_risk", "family": "drain"}
+{"command": "kubectl top pods", "label": "low_risk", "family": "top"}
+{"command": "k logs user-service -f", "label": "no_note", "family": "logs"}
+{"command": "kubectl logs auth-api --previous", "label": "no_note", "family": "logs"}
+{"command": "kubectl port-forward auth-api 8080:80", "label": "low_risk", "family": "port-forward"}
+{"command": "k version -o=json", "label": "no_note", "family": "version"}
+{"command": "k logs checkout-worker --previous", "label": "no_note", "family": "logs"}
+{"command": "k describe secret postgres-primary", "label": "no_note", "family": "describe"}
+{"command": "k exec payment-gateway -n ghostkube -- env", "label": "low_risk", "family": "exec"}
+{"command": "kubectl drain user-service", "label": "high_risk", "family": "drain"}
+{"command": "kubectl drain billing-worker-x2k1 --force", "label": "high_risk", "family": "drain"}
+{"command": "k describe cronjob redis-cache", "label": "no_note", "family": "describe"}
+{"command": "kubectl create -f postgres-primary.yaml", "label": "low_risk", "family": "create"}
+{"command": "k replace -f postgres-primary.yaml", "label": "low_risk", "family": "replace"}
+{"command": "k apply -f auth-api-7d9f4b.yaml", "label": "high_risk", "family": "apply"}
+{"command": "kubectl -n ghostkube get daemonset", "label": "no_note", "family": "get"}
+{"command": "k logs redis-cache -n staging", "label": "no_note", "family": "logs"}
+{"command": "k describe service/payment-gateway", "label": "no_note", "family": "describe"}
+{"command": "kubectl exec -it postgres-primary -- /bin/bash", "label": "low_risk", "family": "exec"}
+{"command": "kubectl drain notification-svc --ignore-daemonsets", "label": "high_risk", "family": "drain"}
+{"command": "kubectl exec payment-gateway -n ghostkube -- env", "label": "low_risk", "family": "exec"}
+{"command": "k scale pod/billing-worker-x2k1 --replicas=1 -n auth", "label": "high_risk", "family": "scale"}
+{"command": "k apply -k ./overlays/staging", "label": "high_risk", "family": "apply"}
+{"command": "kubectl describe service billing-worker-x2k1 -n ghostkube", "label": "no_note", "family": "describe"}
+{"command": "kubectl drain redis-cache --force", "label": "high_risk", "family": "drain"}
+{"command": "k apply -f notification-svc.yaml -n ghostkube", "label": "high_risk", "family": "apply"}
+{"command": "kubectl drain web-frontend-6c8d9", "label": "high_risk", "family": "drain"}
+{"command": "kubectl wait service/user-service --for=condition=Ready", "label": "low_risk", "family": "wait"}
+{"command": "k get daemonset", "label": "no_note", "family": "get"}
+{"command": "kubectl cluster-info dump", "label": "no_note", "family": "cluster-info"}
+{"command": "k drain user-service --force", "label": "high_risk", "family": "drain"}
+{"command": "kubectl version --client", "label": "no_note", "family": "version"}
+{"command": "kubectl top pods", "label": "low_risk", "family": "top"}
+{"command": "kubectl apply -k ./overlays/ghostkube", "label": "high_risk", "family": "apply"}
+{"command": "k rollout undo job/postgres-primary", "label": "low_risk", "family": "rollout"}
+{"command": "k get pod -o wide", "label": "no_note", "family": "get"}
+{"command": "k logs auth-api --previous", "label": "no_note", "family": "logs"}
+{"command": "kubectl port-forward user-service 8080:80", "label": "low_risk", "family": "port-forward"}
+{"command": "k wait pod/web-frontend-6c8d9 --for=condition=Ready", "label": "low_risk", "family": "wait"}
+{"command": "kubectl get statefulset web-frontend-6c8d9", "label": "no_note", "family": "get"}
+{"command": "kubectl edit cronjob/payment-gateway -n ghostkube", "label": "low_risk", "family": "edit"}
+{"command": "k describe cronjob web-frontend-6c8d9", "label": "no_note", "family": "describe"}
+{"command": "kubectl get service -o wide", "label": "no_note", "family": "get"}
+{"command": "kubectl uncordon payment-gateway", "label": "low_risk", "family": "uncordon"}
+{"command": "k version --client", "label": "no_note", "family": "version"}
+{"command": "kubectl logs payment-gateway -n prod", "label": "no_note", "family": "logs"}
+{"command": "kubectl top nodes", "label": "low_risk", "family": "top"}
+{"command": "kubectl logs billing-worker-x2k1 --previous", "label": "no_note", "family": "logs"}
+{"command": "k drain redis-cache --ignore-daemonsets --delete-emptydir-data", "label": "high_risk", "family": "drain"}
+{"command": "k scale cronjob notification-svc --replicas=0", "label": "high_risk", "family": "scale"}
+{"command": "k get daemonset", "label": "no_note", "family": "get"}
+{"command": "kubectl -n prod wait pod/billing-worker-x2k1 --for=condition=Ready", "label": "low_risk", "family": "wait"}
+{"command": "kubectl cp auth-api:/tmp/log.txt ./log.txt", "label": "low_risk", "family": "cp"}
+{"command": "k edit ingress/postgres-primary -n auth", "label": "low_risk", "family": "edit"}
+{"command": "k delete job auth-api-7d9f4b -n staging", "label": "high_risk", "family": "delete"}
